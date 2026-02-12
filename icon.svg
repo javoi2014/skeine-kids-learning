@@ -1,12 +1,32 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
   <defs>
-    <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#c7d2fe"/>
-      <stop offset="1" stop-color="#fbcfe8"/>
+    <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0EA5E9"/>
+      <stop offset="0.55" stop-color="#A3E635"/>
+      <stop offset="1" stop-color="#FB7185"/>
     </linearGradient>
+    <linearGradient id="g2" x1="1" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#A78BFA"/>
+      <stop offset="1" stop-color="#14B8A6"/>
+    </linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#000000" flood-opacity="0.28"/>
+    </filter>
   </defs>
-  <rect width="512" height="512" rx="120" fill="url(#g)"/>
-  <circle cx="256" cy="250" r="120" fill="rgba(255,255,255,0.75)"/>
-  <text x="256" y="285" font-size="120" text-anchor="middle" dominant-baseline="middle">🐶</text>
-  <text x="256" y="410" font-size="44" text-anchor="middle" fill="#111827" font-family="system-ui,Segoe UI,Roboto">Skeine Kids</text>
+
+  <rect width="512" height="512" rx="120" fill="#0B1220"/>
+  <circle cx="160" cy="150" r="120" fill="url(#g2)" opacity="0.22"/>
+  <circle cx="390" cy="240" r="150" fill="url(#g1)" opacity="0.18"/>
+  <circle cx="240" cy="420" r="160" fill="url(#g2)" opacity="0.16"/>
+
+  <!-- Brain / Spark mark -->
+  <g filter="url(#shadow)">
+    <rect x="96" y="112" width="320" height="320" rx="86" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.18)" stroke-width="6"/>
+    <path d="M210 170c-28 0-50 22-50 50 0 10 3 19 8 27-18 6-32 23-32 44 0 26 20 46 46 46h5c7 33 36 58 71 58h18c35 0 64-25 71-58h5c26 0 46-20 46-46 0-21-14-38-32-44 5-8 8-17 8-27 0-28-22-50-50-50-18 0-34 9-42 23-8-14-24-23-42-23h-10c-18 0-34 9-42 23-8-14-24-23-42-23z"
+          fill="url(#g1)" opacity="0.95"/>
+    <path d="M196 240h120M196 288h120M196 336h120" stroke="rgba(11,18,32,0.35)" stroke-width="10" stroke-linecap="round"/>
+    <path d="M358 186l14 20 24 5-18 16 3 24-23-12-23 12 3-24-18-16 24-5z" fill="#FBBF24"/>
+  </g>
+
+  <text x="256" y="468" text-anchor="middle" font-family="system-ui, -apple-system, Segoe UI, Roboto, Arial" font-size="38" font-weight="900" fill="rgba(255,255,255,0.86)">SKEINE</text>
 </svg>
