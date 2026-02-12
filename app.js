@@ -1,6 +1,6 @@
 /* =======================
    Skeine Kids Learning (Premium PWA UI)
-   app.js — full script
+   app.js — full script (colorful tiles + high contrast)
    ======================= */
 
 const MODES = ["Shapes","Colors","Numbers","Letters","Phonics","Memory","Math","Story"];
@@ -21,6 +21,27 @@ const COLOR_MAP = {
   Teal:"#14b8a6"
 };
 
+// Bright “kid” palette for shapes and number tiles
+const SHAPE_COLOR = {
+  Circle:"#22c55e",
+  Square:"#3b82f6",
+  Triangle:"#f97316",
+  Star:"#facc15",
+  Heart:"#fb7185",
+  Diamond:"#a855f7"
+};
+const NUMBER_GRADIENTS = [
+  ["#60a5fa","#a78bfa"],
+  ["#34d399","#60a5fa"],
+  ["#fbbf24","#fb7185"],
+  ["#fb7185","#a78bfa"],
+  ["#22c55e","#facc15"],
+  ["#f97316","#fb7185"],
+  ["#14b8a6","#60a5fa"],
+  ["#a78bfa","#f472b6"],
+  ["#facc15","#60a5fa"]
+];
+
 const PHONICS = [
   {letter:"A",sound:"ah"},{letter:"B",sound:"buh"},{letter:"C",sound:"kuh"},{letter:"D",sound:"duh"},
   {letter:"E",sound:"eh"},{letter:"F",sound:"fuh"},{letter:"G",sound:"guh"},{letter:"H",sound:"huh"},
@@ -40,7 +61,7 @@ const AVATARS = {
   Jayde: { img:"jayde.png", fallback:"👧" }
 };
 
-const LS_KEY = "skeine_kids_pwa_premium_v3";
+const LS_KEY = "skeine_kids_pwa_premium_v4";
 const app = document.getElementById("app");
 
 const state = {
@@ -226,6 +247,7 @@ function buildQuestion(){
 function adapt(isCorrect){
   if(isCorrect){
     state.streak += 1;
+    state.progress.bestStreak = Math.max(state.progress.bestStreak, state.streak);
     if(state.streak >= 3){
       state.difficulty = clamp(state.difficulty+1,1,3);
       state.streak = 0;
@@ -271,35 +293,46 @@ function playerAvatarHTML(){
   `;
 }
 
-/* ---- Choice buttons (ALL MODES get rich tiles) ---- */
+/* ---- Choice buttons: BRIGHT + HIGH-CONTRAST ---- */
 function choiceButtonHTML(opt){
   const val = String(opt);
 
+  // COLORS: whole tile uses the color so it's obvious
   if(currentQ?.type === "color"){
     const hex = COLOR_MAP[val] || "#111827";
+    const text = (val === "Yellow") ? "#111827" : "#ffffff";
     return `
-      <button class="choice" data-choice="${val}">
-        <div class="swatch" style="background:${hex}"></div>
+      <button class="choice" data-choice="${val}"
+        style="background:${hex}; color:${text}; border:3px solid rgba(255,255,255,.9)">
+        <div class="swatch" style="background:rgba(255,255,255,.88)"></div>
         <div style="font-weight:1000">${val}</div>
       </button>
     `;
   }
 
+  // SHAPES: tile light + colored shape icon
   if(currentQ?.type === "shape"){
+    const fill = SHAPE_COLOR[val] || "#22c55e";
     return `
-      <button class="choice" data-choice="${val}">
-        ${shapeSVG(val, "#111827")}
+      <button class="choice" data-choice="${val}"
+        style="background:rgba(255,255,255,.85); color:#111827; border:3px solid rgba(255,255,255,.9)">
+        ${shapeSVG(val, fill)}
         <div style="font-weight:1000">${val}</div>
       </button>
     `;
   }
 
+  // NUMBERS + MATH: gradient tile so it's fun and visible
   if(currentQ?.type === "number" || currentQ?.type === "math"){
     const n = Number(val);
+    const idx = (Number.isFinite(n) ? (n-1) : 0) % NUMBER_GRADIENTS.length;
+    const [a,b] = NUMBER_GRADIENTS[idx];
     const dots = Number.isFinite(n) ? Math.min(n, 9) : 0;
+
     return `
-      <button class="choice" data-choice="${val}">
-        <div style="font-size:30px;font-weight:1000;line-height:1">${val}</div>
+      <button class="choice" data-choice="${val}"
+        style="background: linear-gradient(135deg, ${a}, ${b}); color:#fff; border:3px solid rgba(255,255,255,.9)">
+        <div style="font-size:32px;font-weight:1000;line-height:1">${val}</div>
         <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;max-width:90px;opacity:.95">
           ${Array.from({length:dots}).map(()=>`<div style="width:10px;height:10px;border-radius:999px;background:rgba(255,255,255,.92)"></div>`).join("")}
         </div>
@@ -307,20 +340,26 @@ function choiceButtonHTML(opt){
     `;
   }
 
+  // LETTERS: bright tile, big letter
   if(currentQ?.type === "letter"){
+    const [a,b] = pick(NUMBER_GRADIENTS);
     return `
-      <button class="choice" data-choice="${val}">
-        <div style="font-size:30px;font-weight:1000;line-height:1">${val}</div>
-        <div style="opacity:.9;font-weight:900">${val.toLowerCase()}</div>
+      <button class="choice" data-choice="${val}"
+        style="background: linear-gradient(135deg, ${a}, ${b}); color:#fff; border:3px solid rgba(255,255,255,.9)">
+        <div style="font-size:32px;font-weight:1000;line-height:1">${val}</div>
+        <div style="opacity:.95;font-weight:900">${val.toLowerCase()}</div>
       </button>
     `;
   }
 
+  // PHONICS: bright tile, show letter
   if(currentQ?.type === "phonics"){
+    const [a,b] = pick(NUMBER_GRADIENTS);
     return `
-      <button class="choice" data-choice="${val}">
-        <div style="font-size:30px;font-weight:1000;line-height:1">${val}</div>
-        <div style="opacity:.9;font-weight:900">sound</div>
+      <button class="choice" data-choice="${val}"
+        style="background: linear-gradient(135deg, ${a}, ${b}); color:#fff; border:3px solid rgba(255,255,255,.9)">
+        <div style="font-size:32px;font-weight:1000;line-height:1">${val}</div>
+        <div style="opacity:.95;font-weight:900">sound</div>
       </button>
     `;
   }
@@ -352,7 +391,6 @@ function topBar(){
 
 function render(){
   setBackgroundByMode();
-
   const s = state.screen;
 
   if(s==="welcome"){
@@ -429,21 +467,6 @@ function render(){
 
       <div class="grid grid4">
         ${MODES.map(m=>`<button class="${m===state.mode?'':'secondary'}" data-mode="${m}">${m}</button>`).join("")}
-      </div>
-
-      <div style="height:12px"></div>
-
-      <div class="grid grid2">
-        <div class="panel">
-          <div class="sub">Difficulty</div>
-          <div style="font-weight:1000;font-size:24px">Level ${state.difficulty}</div>
-          <div class="tiny">Gets harder as kids get better.</div>
-        </div>
-        <div class="panel">
-          <div class="sub">Best Streak</div>
-          <div style="font-weight:1000;font-size:24px">${state.progress.bestStreak}</div>
-          <div class="tiny">Saved on this device.</div>
-        </div>
       </div>
 
       <div style="height:12px"></div>
@@ -550,7 +573,6 @@ function render(){
         <div style="font-weight:1000;font-size:20px;margin-top:6px">
           ${perfect ? "Golden Star Sticker ✨" : (state.stars>=2 ? "Super Star Sticker ⭐" : "Brave Try Sticker 💛")}
         </div>
-        <div class="tiny" style="margin-top:8px">(Sticker gallery can be added next.)</div>
       </div>
 
       <div style="height:12px"></div>
@@ -676,16 +698,6 @@ function completeRound(ok){
 
   currentQ = null; mem = null;
   render();
-
-  setTimeout(()=>{
-    if(state.mode==="Memory") speak("Find the matching pairs!");
-    else if(state.mode==="Story"){
-      const p = STORY[state.storyIndex % STORY.length];
-      speak(`${state.player}, ${p.title}. ${p.text}. ${currentQ.prompt}.`);
-    } else {
-      speak(`${state.player}, ${currentQ.prompt}`);
-    }
-  }, 30);
 }
 
 function finishGame(){
@@ -693,38 +705,14 @@ function finishGame(){
 
   state.progress.totalGames += 1;
   state.progress.totalStars += state.stars;
-  state.progress.bestStreak = Math.max(state.progress.bestStreak, state.streak);
   if(perfect) state.progress.modeWins[state.mode] = (state.progress.modeWins[state.mode]||0) + 1;
-
   saveProgress();
 
-  if(perfect){
-    confetti();
-    SFX.success();
-    speak("Perfect game! Amazing!");
-  }else{
-    speak("Great playing!");
-  }
+  if(perfect){ confetti(); SFX.success(); speak("Perfect game! Amazing!"); }
+  else { speak("Great playing!"); }
 
   state.screen="winner";
   render();
-}
-
-/* FIXED: include bestStreak tracking (simple metric) */
-function adapt(isCorrect){
-  if(isCorrect){
-    state.streak += 1;
-    state.progress.bestStreak = Math.max(state.progress.bestStreak, state.streak);
-    if(state.streak >= 3){
-      state.difficulty = clamp(state.difficulty+1,1,3);
-      state.streak = 0;
-    }
-  }else{
-    state.streak = 0;
-    state.difficulty = clamp(state.difficulty-1,1,3);
-  }
-  state.progress.difficulty = state.difficulty;
-  saveProgress();
 }
 
 function bindWinner(){
@@ -759,21 +747,7 @@ function openParent(){
         <div class="panel"><div class="sub">Total Games</div><div style="font-weight:1000;font-size:24px">${p.totalGames}</div></div>
         <div class="panel"><div class="sub">Best Streak</div><div style="font-weight:1000;font-size:24px">${p.bestStreak}</div></div>
         <div class="panel"><div class="sub">Stars Earned</div><div style="font-weight:1000;font-size:24px">${p.totalStars}</div></div>
-        <div class="panel"><div class="sub">Difficulty</div><div style="font-weight:1000;font-size:24px">Level ${p.difficulty}</div></div>
-      </div>
-
-      <div style="height:12px"></div>
-
-      <div class="panel">
-        <div class="sub" style="margin-bottom:10px">Mode Wins (Perfect games)</div>
-        <div class="grid grid3">
-          ${Object.entries(p.modeWins).map(([k,v])=>`
-            <div class="panel" style="background:rgba(255,255,255,.72);">
-              <div style="font-weight:1000">${k}</div>
-              <div class="sub">${v}</div>
-            </div>
-          `).join("")}
-        </div>
+        <div class="panel"><div class="sub">Difficulty</div><div style="font-weight:1000;font-size:24px">Level ${state.difficulty}</div></div>
       </div>
 
       <div class="tiny" style="margin-top:10px">Saved on this device only.</div>
@@ -794,7 +768,7 @@ function renderMemory(){
 
   const cards = m.deck.map(c=>{
     const isUp = m.flipped.includes(c.id) || m.matched.has(c.id);
-    return `<button class="choice" style="height:74px;font-size:28px" data-mem="${c.id}">${isUp ? c.v : "❓"}</button>`;
+    return `<button class="choice" style="height:74px;font-size:28px;background:rgba(255,255,255,.85);color:#111827;border:3px solid rgba(255,255,255,.9)" data-mem="${c.id}">${isUp ? c.v : "❓"}</button>`;
   }).join("");
 
   return `
@@ -840,12 +814,7 @@ function flipMemory(id){
 
         if(m.matched.size === m.deck.length){
           speak("You did it!");
-          state.feedback = {ok:true,msg:"Pairs completed!"};
-          render();
-          setTimeout(()=>{
-            state.feedback = null;
-            completeRound(true);
-          }, 380);
+          setTimeout(()=> completeRound(true), 250);
         }else{
           render();
         }
@@ -862,13 +831,33 @@ function flipMemory(id){
   }
 }
 
+/* ---- Memory deck ---- */
+function memoryDeck(difficulty){
+  const pairCount = difficulty===1?3:difficulty===2?4:5;
+  const pool = ["🐶","🐱","🐻","🦊","🐼","🐸","🦁","🐰","🐵","🐯"];
+  const picks = shuffle(pool).slice(0,pairCount);
+  return shuffle([...picks,...picks]).map((v,i)=>({id:i,v}));
+}
+
+/* ---- Confetti ---- */
+function confetti(){
+  const el = document.getElementById("confetti");
+  el.style.display = "block";
+  el.innerHTML = "";
+  for(let i=0;i<28;i++){
+    const p = document.createElement("i");
+    p.style.setProperty("--x", ((Math.random()-0.5)*560).toFixed(0)+"px");
+    p.style.setProperty("--y", ((Math.random()-0.5)*560).toFixed(0)+"px");
+    el.appendChild(p);
+  }
+  setTimeout(()=>{ el.style.display="none"; }, 900);
+}
+
 /* =======================
-   PWA + Boot
+   Boot
    ======================= */
 window.addEventListener("click", ()=>{ ensureAudio(); }, {once:true});
-
 if("serviceWorker" in navigator){
   navigator.serviceWorker.register("sw.js").catch(()=>{});
 }
-
 render();
