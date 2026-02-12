@@ -4,9 +4,9 @@
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#c7d2fe",
-  "theme_color": "#4f46e5",
-  "description": "A bright learning game for ages 3–5.",
+  "background_color": "#0B1220",
+  "theme_color": "#0B1220",
+  "description": "Bright learning games for ages 3–5.",
   "icons": [
     { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
     { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" },
