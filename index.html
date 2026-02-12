@@ -7,87 +7,177 @@
   <meta name="theme-color" content="#4f46e5" />
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="icon" href="icon.svg" type="image/svg+xml" />
+
   <style>
     :root{
-      --card: rgba(255,255,255,.72);
-      --shadow: 0 18px 40px rgba(0,0,0,.12);
-      --r: 20px;
+      --card: rgba(255,255,255,.75);
+      --shadow: 0 18px 40px rgba(0,0,0,.14);
+      --r: 24px;
+      --ink: #0b1220;
+      --muted: rgba(11,18,32,.65);
+      --stroke: rgba(255,255,255,.45);
     }
     *{box-sizing:border-box}
     body{
       margin:0;
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
       min-height:100vh;
-      background: linear-gradient(180deg,#c7d2fe,#fbcfe8);
-      color:#0f172a;
+      color:var(--ink);
       display:flex;
       align-items:center;
       justify-content:center;
       padding:16px;
+      transition: background .35s ease;
+      background: linear-gradient(180deg,#c7d2fe,#fbcfe8);
     }
-    .wrap{width:min(980px,100%)}
+    .wrap{width:min(1024px,100%)}
+
+    /* App container */
     .card{
       background:var(--card);
       border-radius: var(--r);
       box-shadow: var(--shadow);
       padding:18px;
       backdrop-filter: blur(10px);
+      border: 2px solid var(--stroke);
+      overflow:hidden;
     }
-    .row{display:flex; gap:12px; align-items:center; justify-content:space-between; flex-wrap:wrap}
-    .title{font-size:26px; font-weight:900; letter-spacing:-.02em}
-    .sub{opacity:.75}
-    .grid{display:grid; gap:12px}
-    .grid2{grid-template-columns: repeat(2, minmax(0,1fr))}
-    .grid4{grid-template-columns: repeat(4, minmax(0,1fr))}
-    @media (max-width:720px){ .grid4{grid-template-columns: repeat(2, minmax(0,1fr))} }
+
+    .row{
+      display:flex; gap:12px; align-items:center; justify-content:space-between; flex-wrap:wrap
+    }
+    .bar{display:flex; gap:10px; align-items:center}
+    .title{font-size:28px; font-weight:1000; letter-spacing:-.03em}
+    .sub{opacity:.78}
+    .tiny{font-size:12px; opacity:.75}
+    .center{text-align:center}
+
+    /* Buttons */
     button{
       border:0;
-      border-radius: 18px;
+      border-radius: 22px;
       padding:14px 14px;
-      font-weight:800;
+      font-weight:900;
       cursor:pointer;
-      box-shadow: 0 10px 22px rgba(0,0,0,.10);
+      box-shadow: 0 12px 26px rgba(0,0,0,.12);
       background:#111827;
       color:white;
       font-size:18px;
+      transition: transform .05s ease, filter .15s ease;
+      -webkit-tap-highlight-color: transparent;
     }
-    button.secondary{background: rgba(255,255,255,.7); color:#111827}
-    button.big{height:76px; font-size:22px}
-    button.choice{height:70px; font-size:20px; background:#111827}
-    .pill{
-      border-radius: 999px;
-      padding:8px 10px;
-      background: rgba(255,255,255,.55);
-      font-weight:700;
+    button:active{ transform: scale(.98); }
+    button.secondary{
+      background: rgba(255,255,255,.78);
+      color:#111827;
     }
-    .bar{display:flex; gap:10px; align-items:center}
+    button.big{
+      height:86px;
+      font-size:22px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:12px;
+    }
+    button.choice{
+      height:92px;
+      font-size:18px;
+      border-radius:24px;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      background:#111827;
+    }
+
+    /* Layout grids */
+    .grid{display:grid; gap:12px}
+    .grid2{grid-template-columns: repeat(2, minmax(0,1fr))}
+    .grid3{grid-template-columns: repeat(3, minmax(0,1fr))}
+    .grid4{grid-template-columns: repeat(4, minmax(0,1fr))}
+    @media (max-width:860px){ .grid4{grid-template-columns: repeat(2, minmax(0,1fr))} }
+    @media (max-width:520px){ .grid3{grid-template-columns: repeat(2, minmax(0,1fr))} }
+
+    /* Cards / panels */
+    .panel{
+      background: rgba(255,255,255,.62);
+      border-radius:22px;
+      padding:14px;
+      border: 2px solid rgba(255,255,255,.35);
+    }
+
+    /* Mascot / avatar */
     .mascot{
       width:56px; height:56px; border-radius:18px;
-      background: rgba(255,255,255,.78);
+      background: rgba(255,255,255,.85);
       display:flex; align-items:center; justify-content:center;
-      font-size:30px; box-shadow: 0 10px 22px rgba(0,0,0,.10);
+      font-size:30px;
+      box-shadow: 0 12px 26px rgba(0,0,0,.12);
+      border: 2px solid rgba(255,255,255,.55);
     }
+    .avatarImg{
+      width:56px;
+      height:56px;
+      border-radius:18px;
+      object-fit:cover;
+      box-shadow: 0 12px 26px rgba(0,0,0,.12);
+      border: 2px solid rgba(255,255,255,.55);
+      background: rgba(255,255,255,.85);
+    }
+    .badge{
+      border-radius:999px;
+      padding:8px 10px;
+      background: rgba(255,255,255,.70);
+      font-weight:900;
+    }
+
+    /* Stars */
     .stars span{font-size:22px; margin-right:3px}
-    .panel{background: rgba(255,255,255,.55); border-radius:18px; padding:14px}
-    .prompt{font-size:20px; font-weight:900}
-    .tiny{font-size:12px; opacity:.75}
-    .center{text-align:center}
-    .hidden{display:none}
+
+    /* Prompt */
+    .prompt{font-size:20px; font-weight:1000}
+
+    /* Color swatch */
+    .swatch{
+      width:40px;
+      height:40px;
+      border-radius:999px;
+      border: 3px solid rgba(255,255,255,.95);
+      box-shadow: 0 12px 26px rgba(0,0,0,.12);
+    }
+
+    /* Shape icon */
+    .shapeIcon{
+      width:48px;
+      height:48px;
+      filter: drop-shadow(0 12px 18px rgba(0,0,0,.14));
+    }
+
+    /* Math dots */
     .dots{display:flex; flex-wrap:wrap; gap:10px}
-    .dot{width:22px; height:22px; border-radius:999px; background: rgba(255,255,255,.95); box-shadow: 0 8px 18px rgba(0,0,0,.10)}
+    .dot{width:22px; height:22px; border-radius:999px; background: rgba(255,255,255,.96); box-shadow: 0 10px 20px rgba(0,0,0,.12)}
+
+    /* Toast feedback */
     .toast{
       margin-top:12px;
       padding:12px;
       border-radius: 18px;
-      font-weight:900;
+      font-weight:1000;
       text-align:center;
-      background: rgba(16,185,129,.25);
+      background: rgba(16,185,129,.28);
+      border: 2px solid rgba(255,255,255,.55);
     }
-    .toast.bad{background: rgba(245,158,11,.25)}
+    .toast.bad{
+      background: rgba(245,158,11,.28);
+    }
+
+    /* Confetti */
     .confetti{
       pointer-events:none;
       position:fixed; inset:0;
       overflow:hidden;
+      z-index:60;
     }
     .confetti i{
       position:absolute;
@@ -101,6 +191,8 @@
       from{transform: translate(0,0) rotate(0deg); opacity:0}
       to{transform: translate(var(--x), var(--y)) rotate(260deg); opacity:1}
     }
+
+    /* Modal */
     .modal{
       position:fixed; inset:0;
       background: rgba(0,0,0,.40);
@@ -108,26 +200,51 @@
       padding:14px;
       z-index:50;
     }
+
+    /* Bright backgrounds per mode */
+    .bg-default{ background: linear-gradient(180deg,#c7d2fe,#fbcfe8); }
+    .bg-shapes{ background: linear-gradient(180deg,#99f6e4,#93c5fd); }
+    .bg-colors{ background: linear-gradient(180deg,#fde68a,#fda4af); }
+    .bg-numbers{ background: linear-gradient(180deg,#c4b5fd,#fbcfe8); }
+    .bg-letters{ background: linear-gradient(180deg,#bfdbfe,#bbf7d0); }
+    .bg-phonics{ background: linear-gradient(180deg,#fecaca,#fde68a); }
+    .bg-memory{ background: linear-gradient(180deg,#99f6e4,#c7d2fe); }
+    .bg-math{ background: linear-gradient(180deg,#fdba74,#fda4af); }
+    .bg-story{ background: linear-gradient(180deg,#ddd6fe,#a7f3d0); }
   </style>
 </head>
-<body>
+
+<body class="bg-default">
   <div class="wrap">
     <div id="app" class="card"></div>
   </div>
 
-  <div id="confetti" class="confetti hidden"></div>
+  <div id="confetti" class="confetti" style="display:none"></div>
 
 <script>
 /* =======================
-   Skeine Kids Learning (PWA)
-   Phone-testable, no build tools
+   Skeine Kids Learning (Premium PWA UI)
+   Single-file app (index.html)
    ======================= */
 
 const MODES = ["Shapes","Colors","Numbers","Letters","Phonics","Memory","Math","Story"];
-const SHAPES = ["Circle","Square","Triangle","Star","Heart"];
-const COLORS = ["Red","Blue","Green","Yellow","Purple","Orange"];
+
+const SHAPES = ["Circle","Square","Triangle","Star","Heart","Diamond"];
+const COLORS = ["Red","Blue","Green","Yellow","Purple","Orange","Pink","Teal"];
 const NUMBERS = [1,2,3,4,5,6,7,8,9];
 const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+
+const COLOR_MAP = {
+  Red:"#ef4444",
+  Blue:"#3b82f6",
+  Green:"#22c55e",
+  Yellow:"#facc15",
+  Purple:"#a855f7",
+  Orange:"#fb923c",
+  Pink:"#fb7185",
+  Teal:"#14b8a6"
+};
+
 const PHONICS = [
   {letter:"A",sound:"ah"},{letter:"B",sound:"buh"},{letter:"C",sound:"kuh"},{letter:"D",sound:"duh"},
   {letter:"E",sound:"eh"},{letter:"F",sound:"fuh"},{letter:"G",sound:"guh"},{letter:"H",sound:"huh"},
@@ -135,27 +252,33 @@ const PHONICS = [
   {letter:"M",sound:"muh"},{letter:"N",sound:"nuh"},{letter:"O",sound:"oh"},{letter:"P",sound:"puh"},
   {letter:"R",sound:"ruh"},{letter:"S",sound:"sss"},{letter:"T",sound:"tuh"}
 ];
+
 const STORY = [
   { title:"Sunny Park", text:"Jayce and Jayde go to the park. They see a red ball!", q:{type:"color",prompt:"Tap the RED thing",answer:"Red"} },
   { title:"Shape Picnic", text:"A friendly puppy brings snacks on a STAR plate.", q:{type:"shape",prompt:"Tap the STAR",answer:"Star"} },
   { title:"Counting Ducks", text:"They see ducks in the pond. Let’s count!", q:{type:"number",prompt:"Tap the number 3",answer:3} },
 ];
 
-const LS_KEY = "skeine_kids_pwa_v1";
+const AVATARS = {
+  Jayce: { img:"jayce.png", fallback:"👦" },
+  Jayde: { img:"jayde.png", fallback:"👧" }
+};
+
+const LS_KEY = "skeine_kids_pwa_premium_v2";
 const app = document.getElementById("app");
 
 const state = {
   screen: "welcome", // welcome|player|mode|game|winner
-  player: null, // Jayce|Jayde
+  player: null,
   mode: "Shapes",
   round: 1,
   score: 0,
   stars: 0,
-  difficulty: 1, // 1..3 adaptive
+  difficulty: 1,
   streak: 0,
   storyIndex: 0,
   voiceOn: true,
-  feedback: null, // {ok,msg}
+  feedback: null,
   progress: loadProgress()
 };
 
@@ -190,7 +313,7 @@ function shuffle(arr){
   return a;
 }
 
-/* ---- Sound (no files) ---- */
+/* ---- Audio (no files) ---- */
 let audioCtx = null;
 function ensureAudio(){
   if(!audioCtx){
@@ -227,9 +350,44 @@ function speak(text){
   }catch{}
 }
 
-/* ---- Question Builder ---- */
+/* ---- Background per mode ---- */
+function setBackgroundByMode(){
+  const b = document.body;
+  b.className = "";
+  const m = state.mode;
+  const map = {
+    Shapes:"bg-shapes",
+    Colors:"bg-colors",
+    Numbers:"bg-numbers",
+    Letters:"bg-letters",
+    Phonics:"bg-phonics",
+    Memory:"bg-memory",
+    Math:"bg-math",
+    Story:"bg-story"
+  };
+  b.classList.add(map[m] || "bg-default");
+}
+
+/* ---- Shapes SVG ---- */
+function shapeSVG(name, fill){
+  fill = fill || "#111827";
+  if(name==="Circle")   return `<svg class="shapeIcon" viewBox="0 0 64 64"><circle cx="32" cy="32" r="22" fill="${fill}"/></svg>`;
+  if(name==="Square")   return `<svg class="shapeIcon" viewBox="0 0 64 64"><rect x="14" y="14" width="36" height="36" rx="8" fill="${fill}"/></svg>`;
+  if(name==="Triangle") return `<svg class="shapeIcon" viewBox="0 0 64 64"><path d="M32 12 L54 52 H10 Z" fill="${fill}"/></svg>`;
+  if(name==="Star")     return `<svg class="shapeIcon" viewBox="0 0 64 64"><path d="M32 10l7 14 15 2-11 11 3 16-14-8-14 8 3-16L10 26l15-2z" fill="${fill}"/></svg>`;
+  if(name==="Heart")    return `<svg class="shapeIcon" viewBox="0 0 64 64"><path d="M32 54S10 40 10 24c0-7 6-12 13-12 4 0 8 2 9 5 1-3 5-5 9-5 7 0 13 5 13 12 0 16-22 30-22 30z" fill="${fill}"/></svg>`;
+  if(name==="Diamond")  return `<svg class="shapeIcon" viewBox="0 0 64 64"><path d="M32 8 L54 32 L32 56 L10 32 Z" fill="${fill}"/></svg>`;
+  return "";
+}
+
+function starsHTML(n){
+  return [0,1,2].map(i=>`<span style="opacity:${i<n?1:.30}">⭐</span>`).join("");
+}
+
+/* ---- Options builder ---- */
 function buildOptions(type, answer, difficulty){
   const optionCount = (difficulty===1)?4:(difficulty===2)?6:8;
+
   const pool =
     type==="shape"?SHAPES:
     type==="color"?COLORS:
@@ -244,6 +402,9 @@ function buildOptions(type, answer, difficulty){
   return shuffle([...set]);
 }
 
+let currentQ = null;
+let mem = null;
+
 function buildQuestion(){
   const d = state.difficulty;
   const m = state.mode;
@@ -251,58 +412,39 @@ function buildQuestion(){
   if(m==="Story"){
     const page = STORY[state.storyIndex % STORY.length];
     const q = page.q;
-    const options = buildOptions(q.type, q.answer, d);
-    return {mode:m, type:q.type, prompt:q.prompt, answer:q.answer, meta:{story:page}, options};
+    return {mode:m, type:q.type, prompt:q.prompt, answer:q.answer, meta:{story:page}, options: buildOptions(q.type, q.answer, d)};
   }
-
   if(m==="Memory"){
     return {mode:m, type:"memory", prompt:"Find all the matching pairs!", answer:null, options:[], meta:{}};
   }
-
   if(m==="Math"){
     const max = (d===1)?5:(d===2)?7:9;
     const count = rand(max)+1;
-    const options = buildOptions("number", count, d);
-    return {mode:m, type:"math", prompt:"Count the dots and tap the number", answer:count, options, meta:{count}};
+    return {mode:m, type:"math", prompt:"Count the dots and tap the number", answer:count, options: buildOptions("number", count, d), meta:{count}};
   }
-
   if(m==="Phonics"){
     const item = pick(PHONICS);
-    const options = buildOptions("phonics", item.letter, d);
-    return {mode:m, type:"phonics", prompt:`Tap the letter that makes the '${item.sound}' sound`, answer:item.letter, options, meta:{sound:item.sound}};
+    return {mode:m, type:"phonics", prompt:`Tap the letter that makes the '${item.sound}' sound`, answer:item.letter, options: buildOptions("phonics", item.letter, d), meta:{sound:item.sound}};
   }
-
   if(m==="Letters"){
     const pool = LETTERS.slice(0, d===1?8:d===2?14:26);
     const ans = pick(pool);
     return {mode:m, type:"letter", prompt:"Tap the letter", answer:ans, options: buildOptions("letter", ans, d), meta:{}};
   }
-
   if(m==="Numbers"){
     const max = d===1?5:d===2?7:9;
     const ans = rand(max)+1;
     return {mode:m, type:"number", prompt:"Tap the number", answer:ans, options: buildOptions("number", ans, d), meta:{}};
   }
-
   if(m==="Colors"){
-    const pool = COLORS.slice(0, d===1?4:d===2?5:6);
+    const pool = COLORS.slice(0, d===1?5:d===2?7:8);
     const ans = pick(pool);
     return {mode:m, type:"color", prompt:"Tap the color", answer:ans, options: buildOptions("color", ans, d), meta:{}};
   }
-
   // Shapes default
-  const pool = SHAPES.slice(0, d===1?3:d===2?4:5);
+  const pool = SHAPES.slice(0, d===1?4:d===2?5:6);
   const ans = pick(pool);
   return {mode:m, type:"shape", prompt:"Tap the shape", answer:ans, options: buildOptions("shape", ans, d), meta:{}};
-}
-
-/* ---- Memory Game ---- */
-function memoryDeck(difficulty){
-  const pairCount = difficulty===1?3:difficulty===2?4:5;
-  const pool = ["🐶","🐱","🐻","🦊","🐼","🐸","🦁","🐰","🐵","🐯"];
-  const picks = shuffle(pool).slice(0,pairCount);
-  const deck = shuffle([...picks,...picks]).map((v,i)=>({id:i,v}));
-  return deck;
 }
 
 /* ---- Adaptive difficulty ---- */
@@ -321,29 +463,97 @@ function adapt(isCorrect){
   saveProgress();
 }
 
+/* ---- Memory game ---- */
+function memoryDeck(difficulty){
+  const pairCount = difficulty===1?3:difficulty===2?4:5;
+  const pool = ["🐶","🐱","🐻","🦊","🐼","🐸","🦁","🐰","🐵","🐯"];
+  const picks = shuffle(pool).slice(0,pairCount);
+  return shuffle([...picks,...picks]).map((v,i)=>({id:i,v}));
+}
+
 /* ---- Confetti ---- */
 function confetti(){
   const el = document.getElementById("confetti");
+  el.style.display = "block";
   el.innerHTML = "";
-  el.classList.remove("hidden");
-  for(let i=0;i<24;i++){
+  for(let i=0;i<28;i++){
     const p = document.createElement("i");
-    p.style.setProperty("--x", ((Math.random()-0.5)*520).toFixed(0)+"px");
-    p.style.setProperty("--y", ((Math.random()-0.5)*520).toFixed(0)+"px");
-    p.style.left = "50%";
-    p.style.top = "50%";
+    p.style.setProperty("--x", ((Math.random()-0.5)*560).toFixed(0)+"px");
+    p.style.setProperty("--y", ((Math.random()-0.5)*560).toFixed(0)+"px");
     el.appendChild(p);
   }
-  setTimeout(()=>el.classList.add("hidden"), 900);
+  setTimeout(()=>{ el.style.display="none"; }, 900);
+}
+
+/* ---- Avatar HTML ---- */
+function playerAvatarHTML(){
+  if(!state.player) return `<div class="mascot">🐶</div>`;
+  const a = AVATARS[state.player];
+  // Use image if present, otherwise emoji fallback
+  return `
+    <img class="avatarImg" src="${a.img}" alt="${state.player}"
+      onerror="this.outerHTML='<div class=\\'mascot\\'>${a.fallback}</div>'"
+    />
+  `;
+}
+
+/* ---- Choice button HTML (real colors + real shapes) ---- */
+function choiceButtonHTML(opt){
+  // Color choices
+  if(currentQ?.type === "color"){
+    const name = String(opt);
+    const hex = COLOR_MAP[name] || "#111827";
+    return `
+      <button class="choice" data-choice="${name}">
+        <div class="swatch" style="background:${hex}"></div>
+        <div style="font-weight:1000">${name}</div>
+      </button>
+    `;
+  }
+
+  // Shape choices
+  if(currentQ?.type === "shape"){
+    const name = String(opt);
+    // Use a fun fill color depending on mode
+    const fill = "#111827";
+    return `
+      <button class="choice" data-choice="${name}">
+        ${shapeSVG(name, fill)}
+        <div style="font-weight:1000">${name}</div>
+      </button>
+    `;
+  }
+
+  // Default
+  return `<button class="choice" data-choice="${String(opt)}">${String(opt)}</button>`;
 }
 
 /* =======================
-   Render
+   UI RENDER
    ======================= */
-let currentQ = null;
-let mem = null;
+
+function topBar(){
+  const v = state.voiceOn ? "On" : "Off";
+  return `
+    <div class="row" style="margin-bottom:12px">
+      <div class="bar">
+        ${playerAvatarHTML()}
+        <div>
+          <div class="tiny">Player</div>
+          <div style="font-weight:1000;font-size:18px">${state.player || "—"}</div>
+        </div>
+      </div>
+      <div class="bar">
+        <button class="secondary" id="parent">Parent</button>
+        <button class="secondary" id="voice">Voice: ${v}</button>
+      </div>
+    </div>
+  `;
+}
 
 function render(){
+  setBackgroundByMode();
+
   const s = state.screen;
 
   if(s==="welcome"){
@@ -351,19 +561,19 @@ function render(){
       <div class="center">
         <div class="mascot" style="margin:0 auto 10px;">🐶</div>
         <div class="title">Skeine Kids Learning</div>
-        <div class="sub">Fun learning game for ages <b>3–5</b></div>
+        <div class="sub">A bright learning game for ages <b>3–5</b></div>
       </div>
 
-      <div style="height:12px"></div>
+      <div style="height:14px"></div>
 
       <div class="grid grid2">
         <div class="panel">
           <div class="sub">Quick Rounds</div>
-          <div style="font-weight:900;font-size:20px">3 per game</div>
+          <div style="font-weight:1000;font-size:22px">3 per game</div>
         </div>
         <div class="panel">
           <div class="sub">Adaptive</div>
-          <div style="font-weight:900;font-size:20px">Level ${state.difficulty}</div>
+          <div style="font-weight:1000;font-size:22px">Level ${state.difficulty}</div>
         </div>
       </div>
 
@@ -374,7 +584,9 @@ function render(){
         <button class="secondary" id="parent">Parent Dashboard</button>
       </div>
 
-      <div class="tiny center" style="margin-top:10px">Tip: Tap anywhere once to enable sound on some phones.</div>
+      <div class="tiny center" style="margin-top:10px">
+        Tip: Tap once anywhere to enable sound on some phones.
+      </div>
     `;
     bindWelcome();
     return;
@@ -383,12 +595,23 @@ function render(){
   if(s==="player"){
     app.innerHTML = topBar() + `
       <div class="title">Choose your player</div>
-      <div class="sub">Tap a name to begin.</div>
+      <div class="sub">Tap to begin.</div>
+
       <div style="height:12px"></div>
 
       <div class="grid grid2">
-        <button class="big" id="jayce">👦 Jayce</button>
-        <button class="big" id="jayde">👧 Jayde</button>
+        <button class="big" id="jayce">
+          <img class="avatarImg" src="jayce.png" alt="Jayce"
+            onerror="this.outerHTML='<div class=\\'mascot\\'>👦</div>'"
+          />
+          Jayce
+        </button>
+        <button class="big" id="jayde">
+          <img class="avatarImg" src="jayde.png" alt="Jayde"
+            onerror="this.outerHTML='<div class=\\'mascot\\'>👧</div>'"
+          />
+          Jayde
+        </button>
       </div>
 
       <div style="height:12px"></div>
@@ -401,7 +624,8 @@ function render(){
   if(s==="mode"){
     app.innerHTML = topBar() + `
       <div class="title">Choose a game</div>
-      <div class="sub">Pick a learning mode. Each game is 3 quick rounds.</div>
+      <div class="sub">Each game is 3 quick rounds.</div>
+
       <div style="height:12px"></div>
 
       <div class="grid grid4">
@@ -413,12 +637,12 @@ function render(){
       <div class="grid grid2">
         <div class="panel">
           <div class="sub">Difficulty</div>
-          <div style="font-weight:900;font-size:22px">Level ${state.difficulty}</div>
+          <div style="font-weight:1000;font-size:24px">Level ${state.difficulty}</div>
           <div class="tiny">Gets harder as kids get better.</div>
         </div>
         <div class="panel">
           <div class="sub">Best Streak</div>
-          <div style="font-weight:900;font-size:22px">${state.progress.bestStreak}</div>
+          <div style="font-weight:1000;font-size:24px">${state.progress.bestStreak}</div>
           <div class="tiny">Saved on this device.</div>
         </div>
       </div>
@@ -437,19 +661,29 @@ function render(){
   if(s==="game"){
     if(!currentQ) currentQ = buildQuestion();
 
-    let storyBlock = "";
+    const header = `
+      ${topBar()}
+      <div class="row">
+        <div class="badge"><b>Mode:</b> ${state.mode}</div>
+        <div class="badge"><b>Round:</b> ${state.round}/3</div>
+        <div class="badge"><b>Level:</b> ${state.difficulty}</div>
+      </div>
+      <div style="height:12px"></div>
+    `;
+
+    let promptBlock = "";
     if(state.mode==="Story"){
       const p = currentQ.meta.story;
-      storyBlock = `
+      promptBlock = `
         <div class="panel">
           <div class="sub">Story</div>
-          <div style="font-weight:900;font-size:20px">${p.title}</div>
+          <div style="font-weight:1000;font-size:20px">${p.title}</div>
           <div class="sub" style="margin-top:6px">${p.text}</div>
           <div style="margin-top:10px" class="prompt">${currentQ.prompt}</div>
         </div>
       `;
     } else {
-      storyBlock = `
+      promptBlock = `
         <div class="panel">
           <div class="sub">Buddy says:</div>
           <div class="prompt">${currentQ.prompt}</div>
@@ -461,6 +695,7 @@ function render(){
     let extra = "";
     if(state.mode==="Math"){
       extra = `
+        <div style="height:12px"></div>
         <div class="panel">
           <div class="sub">Count the dots</div>
           <div class="dots" style="margin-top:10px">
@@ -476,36 +711,23 @@ function render(){
       body = renderMemory();
     } else {
       body = `
+        <div style="height:12px"></div>
         <div class="grid grid4">
-          ${currentQ.options.map(o=>`<button class="choice" data-choice="${String(o)}">${String(o)}</button>`).join("")}
+          ${currentQ.options.map(o=>choiceButtonHTML(o)).join("")}
         </div>
       `;
     }
 
     const toast = state.feedback ? `<div class="toast ${state.feedback.ok?'':'bad'}">${state.feedback.msg}</div>` : "";
-
-    app.innerHTML = topBar() + `
-      <div class="row">
-        <div class="pill"><b>Mode:</b> ${state.mode}</div>
-        <div class="pill"><b>Round:</b> ${state.round}/3</div>
-        <div class="pill"><b>Level:</b> ${state.difficulty}</div>
-      </div>
-
-      <div style="height:12px"></div>
-      ${storyBlock}
-      <div style="height:12px"></div>
-      ${extra}
-      ${state.mode==="Math" ? `<div style="height:12px"></div>` : ``}
-
-      ${body}
+    const footer = `
       ${toast}
-
       <div class="row" style="margin-top:12px">
         <div class="sub">Score: <b>${state.score}</b> / 3</div>
-        <div class="stars">${renderStars(state.stars)}</div>
+        <div class="stars">${starsHTML(state.stars)}</div>
       </div>
     `;
 
+    app.innerHTML = header + promptBlock + extra + body + footer;
     bindGame();
     return;
   }
@@ -519,14 +741,14 @@ function render(){
         <div class="mascot" style="margin:0 auto 10px">${perfect ? "🏆" : "⭐"}</div>
         <div style="font-size:18px">${state.player} scored <b>${state.score}</b> out of <b>3</b></div>
         <div style="height:8px"></div>
-        <div class="stars">${renderStars(state.stars)}</div>
+        <div class="stars">${starsHTML(state.stars)}</div>
       </div>
 
       <div style="height:12px"></div>
 
       <div class="panel center">
         <div class="sub">Today’s Reward</div>
-        <div style="font-weight:900;font-size:20px;margin-top:6px">
+        <div style="font-weight:1000;font-size:20px;margin-top:6px">
           ${perfect ? "Golden Star Sticker ✨" : (state.stars>=2 ? "Super Star Sticker ⭐" : "Brave Try Sticker 💛")}
         </div>
         <div class="tiny" style="margin-top:8px">(We can add a real sticker gallery next.)</div>
@@ -544,31 +766,16 @@ function render(){
   }
 }
 
-function topBar(){
-  const v = state.voiceOn ? "On" : "Off";
-  return `
-    <div class="row" style="margin-bottom:12px">
-      <div class="bar">
-        <div class="mascot">🐶</div>
-        <div>
-          <div class="tiny">Player</div>
-          <div style="font-weight:900;font-size:18px">${state.player || "—"}</div>
-        </div>
-      </div>
-      <div class="bar">
-        <button class="secondary" id="parent">Parent</button>
-        <button class="secondary" id="voice">Voice: ${v}</button>
-      </div>
-    </div>
-  `;
-}
-function renderStars(n){
-  return [0,1,2].map(i=>`<span style="opacity:${i<n?1:.3}">⭐</span>`).join("");
+/* =======================
+   Binds / actions
+   ======================= */
+
+function toggleVoice(){
+  state.voiceOn = !state.voiceOn;
+  SFX.pop();
+  render();
 }
 
-/* =======================
-   Binds
-   ======================= */
 function bindWelcome(){
   document.getElementById("start").onclick = ()=>{
     SFX.pop(); speak("Welcome! Let's choose a player.");
@@ -579,11 +786,13 @@ function bindWelcome(){
 
 function bindPlayer(){
   document.getElementById("jayce").onclick = ()=>{
-    SFX.pop(); state.player="Jayce"; speak("Hi Jayce! Let's choose a learning game.");
+    SFX.pop(); state.player="Jayce";
+    speak("Hi Jayce! Let's choose a learning game.");
     state.screen="mode"; render();
   };
   document.getElementById("jayde").onclick = ()=>{
-    SFX.pop(); state.player="Jayde"; speak("Hi Jayde! Let's choose a learning game.");
+    SFX.pop(); state.player="Jayde";
+    speak("Hi Jayde! Let's choose a learning game.");
     state.screen="mode"; render();
   };
   document.getElementById("back").onclick = ()=>{ state.screen="welcome"; render(); };
@@ -595,6 +804,7 @@ function bindMode(){
   [...app.querySelectorAll("[data-mode]")].forEach(btn=>{
     btn.onclick = ()=>{
       SFX.pop(); state.mode = btn.dataset.mode;
+      setBackgroundByMode();
       speak(state.mode + " mode.");
       render();
     };
@@ -613,14 +823,13 @@ function startGame(){
   currentQ = null; mem = null;
   state.screen="game";
   render();
-  // speak first prompt after render
+
   setTimeout(()=>{
-    if(state.mode==="Memory"){
-      speak("Find the matching pairs!");
-    }else if(state.mode==="Story"){
+    if(state.mode==="Memory") speak("Find the matching pairs!");
+    else if(state.mode==="Story"){
       const p = STORY[state.storyIndex % STORY.length];
       speak(`${state.player}, story time! ${p.title}. ${p.text}. ${currentQ.prompt}.`);
-    }else{
+    } else {
       speak(`${state.player}, ${currentQ.prompt}`);
     }
   }, 30);
@@ -642,7 +851,7 @@ function bindGame(){
 
 function handleChoice(raw){
   if(!currentQ) return;
-  const choice = parseChoice(raw, currentQ.answer);
+  const choice = (typeof currentQ.answer==="number") ? Number(raw) : raw;
   const ok = (choice === currentQ.answer);
 
   state.feedback = ok ? {ok:true,msg:"Yes! Great job!"} : {ok:false,msg:"Almost! Next one!"};
@@ -655,12 +864,6 @@ function handleChoice(raw){
     state.feedback = null;
     completeRound(ok);
   }, 520);
-}
-
-function parseChoice(raw, answer){
-  // convert to number if answer is a number
-  if(typeof answer === "number") return Number(raw);
-  return raw;
 }
 
 function completeRound(ok){
@@ -678,12 +881,11 @@ function completeRound(ok){
   render();
 
   setTimeout(()=>{
-    if(state.mode==="Memory"){
-      speak("Find the matching pairs!");
-    }else if(state.mode==="Story"){
+    if(state.mode==="Memory") speak("Find the matching pairs!");
+    else if(state.mode==="Story"){
       const p = STORY[state.storyIndex % STORY.length];
       speak(`${state.player}, ${p.title}. ${p.text}. ${currentQ.prompt}.`);
-    }else{
+    } else {
       speak(`${state.player}, ${currentQ.prompt}`);
     }
   }, 30);
@@ -692,13 +894,11 @@ function completeRound(ok){
 function finishGame(){
   const perfect = state.score===3;
 
-  // update progress
   state.progress.totalGames += 1;
   state.progress.totalStars += state.stars;
   state.progress.bestStreak = Math.max(state.progress.bestStreak, state.streak);
-  if(perfect){
-    state.progress.modeWins[state.mode] = (state.progress.modeWins[state.mode]||0) + 1;
-  }
+  if(perfect) state.progress.modeWins[state.mode] = (state.progress.modeWins[state.mode]||0) + 1;
+
   saveProgress();
 
   if(perfect){
@@ -715,7 +915,6 @@ function finishGame(){
 
 function bindWinner(){
   document.getElementById("again").onclick = ()=>{
-    // restart ONLY here
     SFX.pop();
     state.screen="mode";
     render();
@@ -724,22 +923,17 @@ function bindWinner(){
   document.getElementById("voice").onclick = toggleVoice;
 }
 
-function toggleVoice(){
-  state.voiceOn = !state.voiceOn;
-  SFX.pop();
-  render();
-}
-
 /* =======================
-   Parent Dashboard (modal)
+   Parent Dashboard
    ======================= */
 function openParent(){
   SFX.pop();
   const p = state.progress;
+
   const modal = document.createElement("div");
   modal.className = "modal";
   modal.innerHTML = `
-    <div class="card" style="width:min(860px,100%);">
+    <div class="card" style="width:min(900px,100%);">
       <div class="row">
         <div class="title" style="font-size:22px">Parent Dashboard</div>
         <button class="secondary" id="close">Close</button>
@@ -748,20 +942,20 @@ function openParent(){
       <div style="height:12px"></div>
 
       <div class="grid grid2">
-        <div class="panel"><div class="sub">Total Games</div><div style="font-weight:900;font-size:24px">${p.totalGames}</div></div>
-        <div class="panel"><div class="sub">Best Streak</div><div style="font-weight:900;font-size:24px">${p.bestStreak}</div></div>
-        <div class="panel"><div class="sub">Stars Earned</div><div style="font-weight:900;font-size:24px">${p.totalStars}</div></div>
-        <div class="panel"><div class="sub">Difficulty</div><div style="font-weight:900;font-size:24px">Level ${p.difficulty}</div></div>
+        <div class="panel"><div class="sub">Total Games</div><div style="font-weight:1000;font-size:24px">${p.totalGames}</div></div>
+        <div class="panel"><div class="sub">Best Streak</div><div style="font-weight:1000;font-size:24px">${p.bestStreak}</div></div>
+        <div class="panel"><div class="sub">Stars Earned</div><div style="font-weight:1000;font-size:24px">${p.totalStars}</div></div>
+        <div class="panel"><div class="sub">Difficulty</div><div style="font-weight:1000;font-size:24px">Level ${p.difficulty}</div></div>
       </div>
 
       <div style="height:12px"></div>
 
       <div class="panel">
         <div class="sub" style="margin-bottom:10px">Mode Wins (Perfect games)</div>
-        <div class="grid grid2">
+        <div class="grid grid3">
           ${Object.entries(p.modeWins).map(([k,v])=>`
-            <div class="panel" style="background:rgba(255,255,255,.7);">
-              <div style="font-weight:900">${k}</div>
+            <div class="panel" style="background:rgba(255,255,255,.72);">
+              <div style="font-weight:1000">${k}</div>
               <div class="sub">${v}</div>
             </div>
           `).join("")}
@@ -777,7 +971,7 @@ function openParent(){
 }
 
 /* =======================
-   Memory render/bind
+   Memory mode
    ======================= */
 function renderMemory(){
   const m = mem;
@@ -786,7 +980,7 @@ function renderMemory(){
 
   const cards = m.deck.map(c=>{
     const isUp = m.flipped.includes(c.id) || m.matched.has(c.id);
-    return `<button class="choice" style="height:64px;font-size:26px" data-mem="${c.id}">${isUp ? c.v : "❓"}</button>`;
+    return `<button class="choice" style="height:74px;font-size:28px" data-mem="${c.id}">${isUp ? c.v : "❓"}</button>`;
   }).join("");
 
   return `
@@ -821,13 +1015,15 @@ function flipMemory(id){
     const [a,b] = m.flipped;
     const ca = m.deck.find(x=>x.id===a);
     const cb = m.deck.find(x=>x.id===b);
+
     if(ca.v === cb.v){
       SFX.success(); speak("Nice match!");
       m.matched.add(a); m.matched.add(b);
+
       setTimeout(()=>{
         m.flipped = [];
         m.lock = false;
-        // complete if done
+
         if(m.matched.size === m.deck.length){
           speak("You did it!");
           state.feedback = {ok:true,msg:"Pairs completed!"};
@@ -840,6 +1036,7 @@ function flipMemory(id){
           render();
         }
       }, 420);
+
     }else{
       SFX.fail(); speak("Oops! Try again.");
       setTimeout(()=>{
@@ -856,6 +1053,7 @@ function flipMemory(id){
    ======================= */
 window.addEventListener("click", ()=>{ ensureAudio(); }, {once:true});
 
+// Register SW (works with your sw.js)
 if("serviceWorker" in navigator){
   navigator.serviceWorker.register("sw.js").catch(()=>{});
 }
