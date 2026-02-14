@@ -1,6 +1,7 @@
-/* Skeine Kids Learning — Rebrand v1 (Ocean Night theme)
-   - New tile design + new layout
+/* Skeine Kids Learning — Rebrand v2
+   - New tile design + new layout (Ocean Night theme)
    - Avatar fallback supports jayce/jayde OR jace/jade
+   - Added preview panel for Numbers, Letters, Shapes, Colors, Phonics
 */
 
 const MODES = ["Shapes","Colors","Numbers","Letters","Phonics","Memory","Math","Story"];
@@ -53,7 +54,7 @@ const AVATAR_FILES = {
 };
 const AVATAR_EMOJI = { Jayce:"👦", Jayde:"👧" };
 
-const LS_KEY = "skeine_kids_rebrand_v1";
+const LS_KEY = "skeine_kids_rebrand_v2";
 const app = document.getElementById("app");
 
 const state = {
@@ -174,7 +175,7 @@ function buildQuestion(){
     return {type:q.type, prompt:q.prompt, answer:q.answer, meta:{story:page}, options: buildOptions(q.type,q.answer,d)};
   }
   if(m==="Memory"){
-    return {type:"memory", prompt:"Find the matching pairs!", answer:null, options:[], meta:{}};
+    return {type:"memory", prompt:"Find all the matching pairs!", answer:null, options:[], meta:{}};
   }
   if(m==="Math"){
     const max = (d===1)?5:(d===2)?7:9;
@@ -249,15 +250,11 @@ function avatarImgHTML(name){
   const files = AVATAR_FILES[name] || [];
   const emoji = AVATAR_EMOJI[name] || "🙂";
 
-  // onerror chain: try next filename -> else emoji
-  // NOTE: uses dataset to track which fallback index we are on
   const first = files[0] || "";
   const rest = files.slice(1);
 
-  // if no files, emoji
   if(!first) return `<div class="mascot">${emoji}</div>`;
 
-  // Build JS in attribute (safe small chain)
   const chain = rest.map((f, idx) => `
     if(this.dataset.fallback==='${idx}'){ this.dataset.fallback='${idx+1}'; this.src='${f}'; return; }
   `).join("");
@@ -286,8 +283,6 @@ function tileStyleForMode(type, val){
     return `background:${hex}; color:${text};`;
   }
   if(type==="shape"){
-    const fill = SHAPE_COLOR[val] || "#22c55e";
-    // light tile so the shape is super visible
     return `background:rgba(255,255,255,.92); color:#0B1220;`;
   }
   if(type==="number" || type==="math" || type==="letter" || type==="phonics"){
@@ -301,7 +296,6 @@ function choiceButtonHTML(opt){
   const val = String(opt);
   const t = currentQ?.type;
 
-  // Shape
   if(t==="shape"){
     const fill = SHAPE_COLOR[val] || "#22c55e";
     return `
@@ -311,8 +305,6 @@ function choiceButtonHTML(opt){
       </button>
     `;
   }
-
-  // Color
   if(t==="color"){
     return `
       <button class="choice" data-choice="${val}" style="${tileStyleForMode(t,val)}">
@@ -321,8 +313,6 @@ function choiceButtonHTML(opt){
       </button>
     `;
   }
-
-  // Numbers / Math (with dots)
   if(t==="number" || t==="math"){
     const n = Number(val);
     const dots = Number.isFinite(n) ? Math.min(n, 9) : 0;
@@ -335,8 +325,6 @@ function choiceButtonHTML(opt){
       </button>
     `;
   }
-
-  // Letters
   if(t==="letter"){
     return `
       <button class="choice" data-choice="${val}" style="${tileStyleForMode(t,val)}">
@@ -345,8 +333,6 @@ function choiceButtonHTML(opt){
       </button>
     `;
   }
-
-  // Phonics
   if(t==="phonics"){
     return `
       <button class="choice" data-choice="${val}" style="${tileStyleForMode(t,val)}">
@@ -355,7 +341,6 @@ function choiceButtonHTML(opt){
       </button>
     `;
   }
-
   return `<button class="choice" data-choice="${val}" style="${tileStyleForMode('x',val)}">${val}</button>`;
 }
 
@@ -375,6 +360,66 @@ function topBar(){
       </div>
     </div>
   `;
+}
+
+/* Build preview HTML for the circled panel */
+function buildPreview(){
+  const t = currentQ?.type;
+  const ans = currentQ?.answer;
+  if(!ans || t==="memory" || t==="math" || state.mode==="Story") return "";
+
+  // Numbers preview: big number + dots
+  if(state.mode==="Numbers"){
+    const dots = Array.from({length:ans}).map(() => `<div style="width:22px;height:22px;border-radius:999px;background:rgba(11,18,32,.1); margin:2px;"></div>`).join("");
+    return `
+      <div class="panel">
+        <div class="sub">Preview</div>
+        <div style="font-size:40px;font-weight:900">${ans}</div>
+        <div style="margin-top:8px; display:flex; flex-wrap:wrap; gap:6px;">${dots}</div>
+      </div>
+    `;
+  }
+  // Letters preview: uppercase + lowercase
+  if(state.mode==="Letters"){
+    return `
+      <div class="panel">
+        <div class="sub">Preview</div>
+        <div style="font-size:44px;font-weight:900">${ans}</div>
+        <div style="font-size:28px;font-weight:700">${String(ans).toLowerCase()}</div>
+      </div>
+    `;
+  }
+  // Shapes preview: icon
+  if(state.mode==="Shapes"){
+    const fill = SHAPE_COLOR[ans] || "#22c55e";
+    return `
+      <div class="panel">
+        <div class="sub">Preview</div>
+        ${shapeSVG(ans, fill)}
+      </div>
+    `;
+  }
+  // Colors preview: swatch
+  if(state.mode==="Colors"){
+    const hex = COLOR_MAP[ans] || "#999";
+    return `
+      <div class="panel">
+        <div class="sub">Preview</div>
+        <div style="width:60px;height:60px;border-radius:999px;background:${hex};border:4px solid rgba(11,18,32,0.2); margin:auto;"></div>
+      </div>
+    `;
+  }
+  // Phonics preview: letter + sound
+  if(state.mode==="Phonics"){
+    return `
+      <div class="panel">
+        <div class="sub">Preview</div>
+        <div style="font-size:44px;font-weight:900">${ans}</div>
+        <div style="font-size:24px;font-weight:700">(${currentQ.meta.sound})</div>
+      </div>
+    `;
+  }
+  return "";
 }
 
 function render(){
@@ -496,6 +541,8 @@ function render(){
         </div>
       `;
 
+    const preview = buildPreview();
+
     let extra = "";
     if(state.mode==="Math"){
       extra = `
@@ -531,7 +578,7 @@ function render(){
       </div>
     `;
 
-    app.innerHTML = header + promptBlock + extra + body + footer;
+    app.innerHTML = header + promptBlock + preview + extra + body + footer;
     bindGame();
     return;
   }
