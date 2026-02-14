@@ -1,36 +1,42 @@
-/* Skeine Kids Learning — Rebrand v2
-   - New tile design + new layout (Ocean Night theme)
-   - Avatar fallback supports jayce/jayde OR jace/jade
-   - Added preview panel for Numbers, Letters, Shapes, Colors, Phonics
+/* Skeine Kids Learning — app.js (Target Preview + Install/Download Button)
+   - Adds "Install App" button (PWA install) for Android Chrome
+   - Fixes: question panel shows target shape/color/letter/number to match
 */
 
 const MODES = ["Shapes","Colors","Numbers","Letters","Phonics","Memory","Math","Story"];
+
 const SHAPES = ["Circle","Square","Triangle","Star","Heart","Diamond"];
 const COLORS = ["Red","Blue","Green","Yellow","Purple","Orange","Pink","Teal"];
 const NUMBERS = [1,2,3,4,5,6,7,8,9];
 const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 
 const COLOR_MAP = {
-  Red:"#ef4444", Blue:"#3b82f6", Green:"#22c55e", Yellow:"#facc15",
-  Purple:"#a855f7", Orange:"#fb923c", Pink:"#fb7185", Teal:"#14b8a6"
+  Red:"#ef4444",
+  Blue:"#3b82f6",
+  Green:"#22c55e",
+  Yellow:"#facc15",
+  Purple:"#a855f7",
+  Orange:"#fb923c",
+  Pink:"#fb7185",
+  Teal:"#14b8a6"
 };
 
-const SHAPE_COLOR = {
-  Circle:"#22c55e",
-  Square:"#3b82f6",
+const SHAPE_FILL = {
+  Circle:"#3b82f6",
+  Square:"#22c55e",
   Triangle:"#f97316",
   Star:"#facc15",
   Heart:"#fb7185",
-  Diamond:"#a78bfa"
+  Diamond:"#a855f7"
 };
 
-const TILE_GRADS = [
-  ["#0EA5E9","#A3E635"],
-  ["#FB7185","#A78BFA"],
-  ["#14B8A6","#60A5FA"],
-  ["#FBBF24","#FB7185"],
-  ["#34D399","#A78BFA"],
-  ["#60A5FA","#FBBF24"]
+const TILE_GRADIENTS = [
+  ["#fde68a","#fca5a5"],
+  ["#bfdbfe","#bbf7d0"],
+  ["#c4b5fd","#fbcfe8"],
+  ["#99f6e4","#93c5fd"],
+  ["#fecaca","#fde68a"],
+  ["#fdba74","#fda4af"]
 ];
 
 const PHONICS = [
@@ -42,21 +48,77 @@ const PHONICS = [
 ];
 
 const STORY = [
-  { title:"Ocean Day", text:"Jayce and Jayde see a BLUE wave and a GREEN leaf!", q:{type:"color",prompt:"Tap BLUE",answer:"Blue"} },
-  { title:"Star Snack", text:"A puppy brings snacks on a STAR plate.", q:{type:"shape",prompt:"Tap STAR",answer:"Star"} },
-  { title:"Count 3", text:"They see ducks in the pond. Let’s count!", q:{type:"number",prompt:"Tap the number 3",answer:3} },
+  { title:"Sunny Park", text:"Jayce and Jayde go to the park. They see a red ball!", q:{type:"color",prompt:"Tap the color",answer:"Red"} },
+  { title:"Shape Picnic", text:"A friendly puppy brings snacks on a STAR plate.", q:{type:"shape",prompt:"Tap the shape",answer:"Star"} },
+  { title:"Counting Ducks", text:"They see ducks in the pond. Let’s count!", q:{type:"number",prompt:"Tap the number",answer:3} },
 ];
 
-// Avatar filenames (supports both spellings)
-const AVATAR_FILES = {
-  Jayce: ["jayce.png","jace.png"],
-  Jayde: ["jayde.png","jade.png"]
+const AVATARS = {
+  Jayce: { img:"jayce.png", fallback:"👦" },
+  Jayde: { img:"jayde.png", fallback:"👧" }
 };
-const AVATAR_EMOJI = { Jayce:"👦", Jayde:"👧" };
 
-const LS_KEY = "skeine_kids_rebrand_v2";
+const LS_KEY = "skeine_kids_install_btn_v1";
 const app = document.getElementById("app");
 
+/* =======================
+   PWA Install Support
+   ======================= */
+let deferredInstallPrompt = null;
+let installAvailable = false;
+
+window.addEventListener("beforeinstallprompt", (e) => {
+  // Stop Chrome from auto showing mini-infobar
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  installAvailable = true;
+  // Re-render so the Install button appears
+  render();
+});
+
+// Helpful: detect if already installed
+function isStandalone(){
+  return window.matchMedia?.("(display-mode: standalone)")?.matches || window.navigator.standalone === true;
+}
+
+async function handleInstallClick(){
+  SFX.pop();
+
+  // If already installed, just inform
+  if(isStandalone()){
+    state.feedback = {ok:true, msg:"Already installed ✅"};
+    render();
+    setTimeout(()=>{ state.feedback=null; render(); }, 900);
+    return;
+  }
+
+  if(deferredInstallPrompt){
+    deferredInstallPrompt.prompt();
+    const choice = await deferredInstallPrompt.userChoice.catch(()=>null);
+    deferredInstallPrompt = null;
+    installAvailable = false;
+
+    if(choice?.outcome === "accepted"){
+      state.feedback = {ok:true, msg:"Installing… ✅"};
+    }else{
+      state.feedback = {ok:false, msg:"Install cancelled. You can try again."};
+    }
+    render();
+    setTimeout(()=>{ state.feedback=null; render(); }, 1100);
+  }else{
+    // Fallback instructions
+    state.feedback = {
+      ok:false,
+      msg:"Install not available yet. On Android Chrome: ⋮ menu → “Install app” or “Add to Home screen”."
+    };
+    render();
+    setTimeout(()=>{ state.feedback=null; render(); }, 2200);
+  }
+}
+
+/* =======================
+   State
+   ======================= */
 const state = {
   screen: "welcome",
   player: null,
@@ -78,10 +140,11 @@ function loadProgress(){
     if(!raw) throw 0;
     return JSON.parse(raw);
   }catch{
-    return { totalGames:0, totalStars:0, bestStreak:0, difficulty:1 };
+    return { totalGames:0, bestStreak:0, totalStars:0, difficulty:1, modeWins:Object.fromEntries(MODES.map(m=>[m,0])) };
   }
 }
 function saveProgress(){ localStorage.setItem(LS_KEY, JSON.stringify(state.progress)); }
+
 function clamp(n,a,b){ return Math.max(a, Math.min(b,n)); }
 function rand(n){ return Math.floor(Math.random()*n); }
 function pick(arr){ return arr[rand(arr.length)]; }
@@ -93,9 +156,15 @@ function shuffle(arr){
   }
   return a;
 }
+function tileGradient(seed){
+  const g = TILE_GRADIENTS[seed % TILE_GRADIENTS.length];
+  return `linear-gradient(180deg, ${g[0]}, ${g[1]})`;
+}
 
-/* Audio */
-let audioCtx=null;
+/* =======================
+   Audio / Voice
+   ======================= */
+let audioCtx = null;
 function ensureAudio(){
   if(!audioCtx){
     const AC = window.AudioContext || window.webkitAudioContext;
@@ -105,9 +174,10 @@ function ensureAudio(){
 function beep(freq=440, dur=.09, gain=.05){
   ensureAudio();
   if(!audioCtx) return;
-  const o=audioCtx.createOscillator();
-  const g=audioCtx.createGain();
-  o.type="sine"; o.frequency.value=freq;
+  const o = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  o.type="sine";
+  o.frequency.value=freq;
   g.gain.value=gain;
   o.connect(g); g.connect(audioCtx.destination);
   o.start(); o.stop(audioCtx.currentTime + dur);
@@ -117,8 +187,6 @@ const SFX = {
   success(){beep(660,.07,.05); setTimeout(()=>beep(880,.08,.05),80)},
   fail(){beep(220,.12,.05)}
 };
-
-/* Voice */
 function speak(text){
   if(!state.voiceOn) return;
   if(!window.speechSynthesis) return;
@@ -130,26 +198,37 @@ function speak(text){
   }catch{}
 }
 
-/* SVG shapes (BIG + outlined) */
+/* =======================
+   Background + SVG
+   ======================= */
+function setBackgroundByMode(){
+  const b = document.body;
+  b.className = "";
+  const map = {
+    Shapes:"bg-shapes", Colors:"bg-colors", Numbers:"bg-numbers", Letters:"bg-letters",
+    Phonics:"bg-phonics", Memory:"bg-memory", Math:"bg-math", Story:"bg-story"
+  };
+  b.classList.add(map[state.mode] || "bg-default");
+}
+
 function shapeSVG(name, fill){
-  const stroke = "rgba(11,18,32,.35)";
-  const sw = 4;
-  if(name==="Circle")   return `<svg class="shapeIcon" viewBox="0 0 64 64"><circle cx="32" cy="32" r="22" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"/></svg>`;
-  if(name==="Square")   return `<svg class="shapeIcon" viewBox="0 0 64 64"><rect x="14" y="14" width="36" height="36" rx="9" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"/></svg>`;
-  if(name==="Triangle") return `<svg class="shapeIcon" viewBox="0 0 64 64"><path d="M32 10 L56 54 H8 Z" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" stroke-linejoin="round"/></svg>`;
-  if(name==="Star")     return `<svg class="shapeIcon" viewBox="0 0 64 64"><path d="M32 8l8 16 18 3-13 12 3 19-16-9-16 9 3-19L6 27l18-3z" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" stroke-linejoin="round"/></svg>`;
-  if(name==="Heart")    return `<svg class="shapeIcon" viewBox="0 0 64 64"><path d="M32 56S8 40 8 23c0-7 6-13 14-13 4 0 8 2 10 6 2-4 6-6 10-6 8 0 14 6 14 13 0 17-24 33-24 33z" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" stroke-linejoin="round"/></svg>`;
-  if(name==="Diamond")  return `<svg class="shapeIcon" viewBox="0 0 64 64"><path d="M32 6 L58 32 L32 58 L6 32 Z" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" stroke-linejoin="round"/></svg>`;
+  fill = fill || "#111827";
+  if(name==="Circle")   return `<svg class="shapeIcon" viewBox="0 0 64 64"><circle cx="32" cy="32" r="22" fill="${fill}"/></svg>`;
+  if(name==="Square")   return `<svg class="shapeIcon" viewBox="0 0 64 64"><rect x="14" y="14" width="36" height="36" rx="8" fill="${fill}"/></svg>`;
+  if(name==="Triangle") return `<svg class="shapeIcon" viewBox="0 0 64 64"><path d="M32 12 L54 52 H10 Z" fill="${fill}"/></svg>`;
+  if(name==="Star")     return `<svg class="shapeIcon" viewBox="0 0 64 64"><path d="M32 10l7 14 15 2-11 11 3 16-14-8-14 8 3-16L10 26l15-2z" fill="${fill}"/></svg>`;
+  if(name==="Heart")    return `<svg class="shapeIcon" viewBox="0 0 64 64"><path d="M32 54S10 40 10 24c0-7 6-12 13-12 4 0 8 2 9 5 1-3 5-5 9-5 7 0 13 5 13 12 0 16-22 30-22 30z" fill="${fill}"/></svg>`;
+  if(name==="Diamond")  return `<svg class="shapeIcon" viewBox="0 0 64 64"><path d="M32 8 L54 32 L32 56 L10 32 Z" fill="${fill}"/></svg>`;
   return "";
 }
 
-function starsHTML(n){
-  return [0,1,2].map(i=>`<span style="opacity:${i<n?1:.30}">⭐</span>`).join("");
-}
+function starsHTML(n){ return [0,1,2].map(i=>`<span style="opacity:${i<n?1:.30}">⭐</span>`).join(""); }
 
-/* Options */
+/* =======================
+   Questions
+   ======================= */
 function buildOptions(type, answer, difficulty){
-  const count = (difficulty===1)?4:(difficulty===2)?6:8;
+  const optionCount = (difficulty===1)?4:(difficulty===2)?6:8;
   const pool =
     type==="shape"?SHAPES:
     type==="color"?COLORS:
@@ -158,12 +237,12 @@ function buildOptions(type, answer, difficulty){
     type==="phonics"?PHONICS.map(p=>p.letter):[];
 
   const set = new Set([answer]);
-  while(set.size < Math.min(count, pool.length)) set.add(pick(pool));
+  while(set.size < Math.min(optionCount, pool.length)) set.add(pick(pool));
   return shuffle([...set]);
 }
 
-let currentQ=null;
-let mem=null;
+let currentQ = null;
+let mem = null;
 
 function buildQuestion(){
   const d = state.difficulty;
@@ -172,49 +251,46 @@ function buildQuestion(){
   if(m==="Story"){
     const page = STORY[state.storyIndex % STORY.length];
     const q = page.q;
-    return {type:q.type, prompt:q.prompt, answer:q.answer, meta:{story:page}, options: buildOptions(q.type,q.answer,d)};
+    return {mode:m,type:q.type,prompt:q.prompt,answer:q.answer,meta:{story:page},options:buildOptions(q.type,q.answer,d)};
   }
   if(m==="Memory"){
-    return {type:"memory", prompt:"Find all the matching pairs!", answer:null, options:[], meta:{}};
+    return {mode:m,type:"memory",prompt:"Find all the matching pairs!",answer:null,options:[],meta:{}};
   }
   if(m==="Math"){
     const max = (d===1)?5:(d===2)?7:9;
     const count = rand(max)+1;
-    return {type:"math", prompt:"Count the dots and tap the number", answer:count, options: buildOptions("number",count,d), meta:{count}};
+    return {mode:m,type:"math",prompt:"Count the dots and tap the number",answer:count,options:buildOptions("number",count,d),meta:{count}};
   }
   if(m==="Phonics"){
     const item = pick(PHONICS);
-    return {type:"phonics", prompt:`Tap the letter for '${item.sound}'`, answer:item.letter, options: buildOptions("phonics",item.letter,d), meta:{sound:item.sound}};
+    return {mode:m,type:"phonics",prompt:`Tap the letter for '${item.sound}'`,answer:item.letter,options:buildOptions("phonics",item.letter,d),meta:{sound:item.sound}};
   }
   if(m==="Letters"){
     const pool = LETTERS.slice(0, d===1?8:d===2?14:26);
     const ans = pick(pool);
-    return {type:"letter", prompt:"Tap the letter", answer:ans, options: buildOptions("letter",ans,d), meta:{}};
+    return {mode:m,type:"letter",prompt:"Tap the letter",answer:ans,options:buildOptions("letter",ans,d),meta:{}};
   }
   if(m==="Numbers"){
     const max = d===1?5:d===2?7:9;
     const ans = rand(max)+1;
-    return {type:"number", prompt:"Tap the number", answer:ans, options: buildOptions("number",ans,d), meta:{}};
+    return {mode:m,type:"number",prompt:"Tap the number",answer:ans,options:buildOptions("number",ans,d),meta:{}};
   }
   if(m==="Colors"){
     const pool = COLORS.slice(0, d===1?5:d===2?7:8);
     const ans = pick(pool);
-    return {type:"color", prompt:"Tap the color", answer:ans, options: buildOptions("color",ans,d), meta:{}};
+    return {mode:m,type:"color",prompt:"Tap the color",answer:ans,options:buildOptions("color",ans,d),meta:{}};
   }
-  // Shapes
   const pool = SHAPES.slice(0, d===1?4:d===2?5:6);
   const ans = pick(pool);
-  return {type:"shape", prompt:"Tap the shape", answer:ans, options: buildOptions("shape",ans,d), meta:{}};
+  return {mode:m,type:"shape",prompt:"Tap the shape",answer:ans,options:buildOptions("shape",ans,d),meta:{}};
 }
 
+/* Adaptive */
 function adapt(isCorrect){
   if(isCorrect){
     state.streak += 1;
     state.progress.bestStreak = Math.max(state.progress.bestStreak, state.streak);
-    if(state.streak >= 3){
-      state.difficulty = clamp(state.difficulty+1,1,3);
-      state.streak = 0;
-    }
+    if(state.streak >= 3){ state.difficulty = clamp(state.difficulty+1,1,3); state.streak = 0; }
   }else{
     state.streak = 0;
     state.difficulty = clamp(state.difficulty-1,1,3);
@@ -234,6 +310,7 @@ function memoryDeck(difficulty){
 /* Confetti */
 function confetti(){
   const el = document.getElementById("confetti");
+  if(!el) return;
   el.style.display = "block";
   el.innerHTML = "";
   for(let i=0;i<28;i++){
@@ -245,106 +322,133 @@ function confetti(){
   setTimeout(()=>{ el.style.display="none"; }, 900);
 }
 
-/* Avatar HTML with filename fallback chain */
-function avatarImgHTML(name){
-  const files = AVATAR_FILES[name] || [];
-  const emoji = AVATAR_EMOJI[name] || "🙂";
-
-  const first = files[0] || "";
-  const rest = files.slice(1);
-
-  if(!first) return `<div class="mascot">${emoji}</div>`;
-
-  const chain = rest.map((f, idx) => `
-    if(this.dataset.fallback==='${idx}'){ this.dataset.fallback='${idx+1}'; this.src='${f}'; return; }
-  `).join("");
-
-  return `
-    <img class="avatarImg" src="${first}" alt="${name}"
-      data-fallback="0"
-      onerror="
-        ${chain}
-        this.outerHTML='<div class=\\'mascot\\'>${emoji}</div>';
-      "
-    />
-  `;
-}
-
+/* =======================
+   UI helpers
+   ======================= */
 function playerAvatarHTML(){
   if(!state.player) return `<div class="mascot">🐶</div>`;
-  return avatarImgHTML(state.player);
+  const a = AVATARS[state.player];
+  return `<img class="avatarImg" src="${a.img}" alt="${state.player}"
+    onerror="this.outerHTML='<div class=\\'mascot\\'>${a.fallback}</div>'" />`;
 }
 
-/* Tile styles */
-function tileStyleForMode(type, val){
-  if(type==="color"){
-    const hex = COLOR_MAP[val] || "#0B1220";
-    const text = (val==="Yellow") ? "#0B1220" : "#ffffff";
-    return `background:${hex}; color:${text};`;
+/* Target preview in question panel */
+function targetPreviewHTML(){
+  if(!currentQ) return "";
+  const type = currentQ.type;
+  const ans = currentQ.answer;
+
+  const wrapStart = `<div style="margin-top:10px;display:flex;justify-content:center;">
+    <div style="min-width:140px;padding:12px 14px;border-radius:20px;background: rgba(255,255,255,.85);
+      border: 2px solid rgba(255,255,255,.75);box-shadow: 0 14px 28px rgba(0,0,0,.10);
+      display:flex;flex-direction:column;align-items:center;gap:8px;">`;
+  const wrapEnd = `</div></div>`;
+
+  if(type === "color"){
+    const hex = COLOR_MAP[String(ans)] || "#111827";
+    return wrapStart + `
+      <div class="tiny" style="font-weight:1000;opacity:.8">MATCH THIS</div>
+      <div class="swatch" style="width:64px;height:64px;background:${hex}; border-width:5px;"></div>
+      <div style="font-weight:1000;font-size:18px">${ans}</div>
+    ` + wrapEnd;
   }
-  if(type==="shape"){
-    return `background:rgba(255,255,255,.92); color:#0B1220;`;
+  if(type === "shape"){
+    const fill = SHAPE_FILL[String(ans)] || "#111827";
+    return wrapStart + `
+      <div class="tiny" style="font-weight:1000;opacity:.8">MATCH THIS</div>
+      ${shapeSVG(String(ans), fill)}
+      <div style="font-weight:1000;font-size:18px">${ans}</div>
+    ` + wrapEnd;
   }
-  if(type==="number" || type==="math" || type==="letter" || type==="phonics"){
-    const g = TILE_GRADS[rand(TILE_GRADS.length)];
-    return `background:linear-gradient(135deg, ${g[0]}, ${g[1]}); color:#ffffff;`;
+  if(type === "letter" || type === "phonics"){
+    return wrapStart + `
+      <div class="tiny" style="font-weight:1000;opacity:.8">MATCH THIS</div>
+      <div style="font-size:54px;font-weight:1000;line-height:1">${String(ans)}</div>
+      ${type==="phonics"
+        ? `<div style="font-weight:900;opacity:.8">sound: “${currentQ.meta.sound}”</div>`
+        : `<div style="font-weight:900;opacity:.8">${String(ans).toLowerCase()}</div>`
+      }
+    ` + wrapEnd;
   }
-  return `background:#0B1220; color:#fff;`;
+  if(type === "number" || type === "math"){
+    const n = Number(ans);
+    const dots = Number.isFinite(n) ? Math.min(n, 9) : 0;
+    return wrapStart + `
+      <div class="tiny" style="font-weight:1000;opacity:.8">MATCH THIS</div>
+      <div style="font-size:54px;font-weight:1000;line-height:1">${String(ans)}</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;max-width:180px">
+        ${Array.from({length:dots}).map(()=>`<div style="width:12px;height:12px;border-radius:999px;background:rgba(17,24,39,.18)"></div>`).join("")}
+      </div>
+    ` + wrapEnd;
+  }
+  return "";
 }
 
-function choiceButtonHTML(opt){
+/* Tile buttons */
+function choiceButtonHTML(opt, idx){
   const val = String(opt);
-  const t = currentQ?.type;
 
-  if(t==="shape"){
-    const fill = SHAPE_COLOR[val] || "#22c55e";
+  if(currentQ?.type === "color"){
+    const hex = COLOR_MAP[val] || "#111827";
     return `
-      <button class="choice" data-choice="${val}" style="${tileStyleForMode(t,val)}">
+      <button class="choice" data-choice="${val}" style="background:${tileGradient(idx)}">
+        <div class="swatch" style="background:${hex}"></div>
+        <div style="font-weight:1000">${val}</div>
+      </button>
+    `;
+  }
+
+  if(currentQ?.type === "shape"){
+    const fill = SHAPE_FILL[val] || "#111827";
+    return `
+      <button class="choice" data-choice="${val}" style="background:${tileGradient(idx)}">
         ${shapeSVG(val, fill)}
         <div style="font-weight:1000">${val}</div>
       </button>
     `;
   }
-  if(t==="color"){
-    return `
-      <button class="choice" data-choice="${val}" style="${tileStyleForMode(t,val)}">
-        <div style="width:46px;height:46px;border-radius:999px;background:rgba(255,255,255,.88);border:4px solid rgba(255,255,255,.92)"></div>
-        <div style="font-weight:1000">${val}</div>
-      </button>
-    `;
-  }
-  if(t==="number" || t==="math"){
+
+  if(currentQ?.type === "number" || currentQ?.type === "math"){
     const n = Number(val);
     const dots = Number.isFinite(n) ? Math.min(n, 9) : 0;
     return `
-      <button class="choice" data-choice="${val}" style="${tileStyleForMode(t,val)}">
-        <div style="font-size:34px;font-weight:1000;line-height:1">${val}</div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;max-width:110px;opacity:.95">
-          ${Array.from({length:dots}).map(()=>`<div style="width:10px;height:10px;border-radius:999px;background:rgba(255,255,255,.92)"></div>`).join("")}
+      <button class="choice" data-choice="${val}" style="background:${tileGradient(idx)}">
+        <div style="font-size:32px;font-weight:1000;line-height:1;color:#071021">${val}</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;max-width:92px">
+          ${Array.from({length:dots}).map(()=>`<div style="width:10px;height:10px;border-radius:999px;background:rgba(255,255,255,.95)"></div>`).join("")}
         </div>
       </button>
     `;
   }
-  if(t==="letter"){
+
+  if(currentQ?.type === "letter"){
     return `
-      <button class="choice" data-choice="${val}" style="${tileStyleForMode(t,val)}">
-        <div style="font-size:34px;font-weight:1000;line-height:1">${val}</div>
-        <div style="opacity:.95;font-weight:900">${val.toLowerCase()}</div>
+      <button class="choice" data-choice="${val}" style="background:${tileGradient(idx)}">
+        <div style="font-size:32px;font-weight:1000;line-height:1;color:#071021">${val}</div>
+        <div style="font-weight:900;opacity:.9">${val.toLowerCase()}</div>
       </button>
     `;
   }
-  if(t==="phonics"){
+
+  if(currentQ?.type === "phonics"){
     return `
-      <button class="choice" data-choice="${val}" style="${tileStyleForMode(t,val)}">
-        <div style="font-size:34px;font-weight:1000;line-height:1">${val}</div>
-        <div style="opacity:.95;font-weight:900">sound</div>
+      <button class="choice" data-choice="${val}" style="background:${tileGradient(idx)}">
+        <div style="font-size:32px;font-weight:1000;line-height:1;color:#071021">${val}</div>
+        <div style="font-weight:900;opacity:.9">sound</div>
       </button>
     `;
   }
-  return `<button class="choice" data-choice="${val}" style="${tileStyleForMode('x',val)}">${val}</button>`;
+
+  return `<button class="choice" data-choice="${val}">${val}</button>`;
 }
 
+/* =======================
+   Render
+   ======================= */
 function topBar(){
+  const v = state.voiceOn ? "On" : "Off";
+  const showInstall = installAvailable && !isStandalone();
+
   return `
     <div class="row" style="margin-bottom:12px">
       <div class="bar">
@@ -355,130 +459,73 @@ function topBar(){
         </div>
       </div>
       <div class="bar">
+        ${showInstall ? `<button class="secondary" id="installBtn">Install App ⬇️</button>` : ``}
         <button class="secondary" id="parent">Parent</button>
-        <button class="secondary" id="voice">Voice: ${state.voiceOn ? "On":"Off"}</button>
+        <button class="secondary" id="voice">Voice: ${v}</button>
       </div>
     </div>
   `;
 }
 
-/* Build preview HTML for the circled panel */
-function buildPreview(){
-  const t = currentQ?.type;
-  const ans = currentQ?.answer;
-  if(!ans || t==="memory" || t==="math" || state.mode==="Story") return "";
-
-  // Numbers preview: big number + dots
-  if(state.mode==="Numbers"){
-    const dots = Array.from({length:ans}).map(() => `<div style="width:22px;height:22px;border-radius:999px;background:rgba(11,18,32,.1); margin:2px;"></div>`).join("");
-    return `
-      <div class="panel">
-        <div class="sub">Preview</div>
-        <div style="font-size:40px;font-weight:900">${ans}</div>
-        <div style="margin-top:8px; display:flex; flex-wrap:wrap; gap:6px;">${dots}</div>
-      </div>
-    `;
-  }
-  // Letters preview: uppercase + lowercase
-  if(state.mode==="Letters"){
-    return `
-      <div class="panel">
-        <div class="sub">Preview</div>
-        <div style="font-size:44px;font-weight:900">${ans}</div>
-        <div style="font-size:28px;font-weight:700">${String(ans).toLowerCase()}</div>
-      </div>
-    `;
-  }
-  // Shapes preview: icon
-  if(state.mode==="Shapes"){
-    const fill = SHAPE_COLOR[ans] || "#22c55e";
-    return `
-      <div class="panel">
-        <div class="sub">Preview</div>
-        ${shapeSVG(ans, fill)}
-      </div>
-    `;
-  }
-  // Colors preview: swatch
-  if(state.mode==="Colors"){
-    const hex = COLOR_MAP[ans] || "#999";
-    return `
-      <div class="panel">
-        <div class="sub">Preview</div>
-        <div style="width:60px;height:60px;border-radius:999px;background:${hex};border:4px solid rgba(11,18,32,0.2); margin:auto;"></div>
-      </div>
-    `;
-  }
-  // Phonics preview: letter + sound
-  if(state.mode==="Phonics"){
-    return `
-      <div class="panel">
-        <div class="sub">Preview</div>
-        <div style="font-size:44px;font-weight:900">${ans}</div>
-        <div style="font-size:24px;font-weight:700">(${currentQ.meta.sound})</div>
-      </div>
-    `;
-  }
-  return "";
-}
-
 function render(){
-  const s = state.screen;
+  setBackgroundByMode();
 
-  if(s==="welcome"){
+  const toast = state.feedback
+    ? `<div class="toast ${state.feedback.ok?'':'bad'}">${state.feedback.msg}</div>`
+    : "";
+
+  if(state.screen==="welcome"){
+    const showInstall = installAvailable && !isStandalone();
     app.innerHTML = `
       <div class="center">
-        <div class="mascot" style="margin:0 auto 10px;">🧠</div>
+        <div class="mascot" style="margin:0 auto 10px;">🐶</div>
         <div class="title">Skeine Kids Learning</div>
-        <div class="sub">Rebrand Edition • Ages <b>3–5</b></div>
+        <div class="sub">A bright learning game for ages <b>3–5</b></div>
       </div>
 
-      <div style="height:14px"></div>
+      <div style="height:12px"></div>
 
       <div class="grid grid2">
-        <div class="panel">
-          <div class="sub">Quick Rounds</div>
-          <div style="font-weight:1000;font-size:22px">3 per game</div>
-        </div>
-        <div class="panel">
-          <div class="sub">Adaptive</div>
-          <div style="font-weight:1000;font-size:22px">Level ${state.difficulty}</div>
-        </div>
+        <div class="panel"><div class="sub">Quick Rounds</div><div style="font-weight:1000;font-size:22px">3 per game</div></div>
+        <div class="panel"><div class="sub">Adaptive</div><div style="font-weight:1000;font-size:22px">Level ${state.difficulty}</div></div>
       </div>
 
       <div style="height:12px"></div>
 
       <div class="grid">
+        ${showInstall ? `<button id="installMain">Install App ⬇️</button>` : ``}
         <button id="start">Start</button>
         <button class="secondary" id="parent">Parent Dashboard</button>
       </div>
 
+      ${toast}
       <div class="tiny center" style="margin-top:10px">
-        Tip: Tap once anywhere to enable sound on some phones.
+        If Install doesn’t show: Android Chrome ⋮ menu → “Install app” / “Add to Home screen”
       </div>
     `;
     bindWelcome();
     return;
   }
 
-  if(s==="player"){
+  if(state.screen==="player"){
     app.innerHTML = topBar() + `
       <div class="title">Choose your player</div>
-      <div class="sub">Jayce and Jayde</div>
+      <div class="sub">Tap to begin.</div>
 
       <div style="height:12px"></div>
 
       <div class="grid grid2">
         <button class="big" id="jayce">
-          ${avatarImgHTML("Jayce")}
+          <img class="avatarImg" src="jayce.png" alt="Jayce" onerror="this.outerHTML='<div class=\\'mascot\\'>👦</div>'" />
           Jayce
         </button>
         <button class="big" id="jayde">
-          ${avatarImgHTML("Jayde")}
+          <img class="avatarImg" src="jayde.png" alt="Jayde" onerror="this.outerHTML='<div class=\\'mascot\\'>👧</div>'" />
           Jayde
         </button>
       </div>
 
+      ${toast}
       <div style="height:12px"></div>
       <button class="secondary" id="back">Back</button>
     `;
@@ -486,10 +533,10 @@ function render(){
     return;
   }
 
-  if(s==="mode"){
+  if(state.screen==="mode"){
     app.innerHTML = topBar() + `
-      <div class="title">Pick a game</div>
-      <div class="sub">Bright, quick learning rounds</div>
+      <div class="title">Choose a game</div>
+      <div class="sub">Each game is 3 quick rounds.</div>
 
       <div style="height:12px"></div>
 
@@ -497,6 +544,7 @@ function render(){
         ${MODES.map(m=>`<button class="${m===state.mode?'':'secondary'}" data-mode="${m}">${m}</button>`).join("")}
       </div>
 
+      ${toast}
       <div style="height:12px"></div>
 
       <div class="grid">
@@ -508,7 +556,7 @@ function render(){
     return;
   }
 
-  if(s==="game"){
+  if(state.screen==="game"){
     if(!currentQ) currentQ = buildQuestion();
 
     const header = `
@@ -521,27 +569,27 @@ function render(){
       <div style="height:12px"></div>
     `;
 
-    const promptBlock = (state.mode==="Story")
-      ? (() => {
-          const p = currentQ.meta.story;
-          return `
-            <div class="panel">
-              <div class="sub">Story</div>
-              <div style="font-weight:1000;font-size:20px">${p.title}</div>
-              <div class="sub" style="margin-top:6px">${p.text}</div>
-              <div style="margin-top:10px" class="prompt">${currentQ.prompt}</div>
-            </div>
-          `;
-        })()
-      : `
+    let promptBlock = "";
+    if(state.mode==="Story"){
+      const p = currentQ.meta.story;
+      promptBlock = `
+        <div class="panel">
+          <div class="sub">Story</div>
+          <div style="font-weight:1000;font-size:20px">${p.title}</div>
+          <div class="sub" style="margin-top:6px">${p.text}</div>
+          <div style="margin-top:10px" class="prompt">${currentQ.prompt}</div>
+          ${targetPreviewHTML()}
+        </div>
+      `;
+    } else {
+      promptBlock = `
         <div class="panel">
           <div class="sub">Buddy says:</div>
           <div class="prompt">${currentQ.prompt}</div>
-          ${state.mode==="Phonics" ? `<div class="tiny">Sound: “${currentQ.meta.sound}”</div>` : ``}
+          ${targetPreviewHTML()}
         </div>
       `;
-
-    const preview = buildPreview();
+    }
 
     let extra = "";
     if(state.mode==="Math"){
@@ -549,7 +597,7 @@ function render(){
         <div style="height:12px"></div>
         <div class="panel">
           <div class="sub">Count the dots</div>
-          <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:10px">
+          <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:10px;justify-content:center">
             ${Array.from({length: currentQ.meta.count}).map(()=>`<div style="width:22px;height:22px;border-radius:999px;background:rgba(255,255,255,.96);box-shadow:0 10px 20px rgba(0,0,0,.12)"></div>`).join("")}
           </div>
         </div>
@@ -564,12 +612,11 @@ function render(){
       body = `
         <div style="height:12px"></div>
         <div class="grid grid4">
-          ${currentQ.options.map(o=>choiceButtonHTML(o)).join("")}
+          ${currentQ.options.map((o,i)=>choiceButtonHTML(o,i)).join("")}
         </div>
       `;
     }
 
-    const toast = state.feedback ? `<div class="panel" style="text-align:center;font-weight:1000">${state.feedback.msg}</div>` : "";
     const footer = `
       ${toast}
       <div class="row" style="margin-top:12px">
@@ -578,25 +625,24 @@ function render(){
       </div>
     `;
 
-    app.innerHTML = header + promptBlock + preview + extra + body + footer;
+    app.innerHTML = header + promptBlock + extra + body + footer;
     bindGame();
     return;
   }
 
-  if(s==="winner"){
+  if(state.screen==="winner"){
     const perfect = state.score===3;
     app.innerHTML = topBar() + `
       <div class="center">
-        <div class="title">${perfect ? "🏆 PERFECT!" : "⭐ Great Job!"}</div>
+        <div class="title">${perfect ? "🎉 PERFECT GAME! 🎉" : "🎉 Great Job! 🎉"}</div>
         <div style="height:10px"></div>
-        <div class="mascot" style="margin:0 auto 10px">${perfect ? "🎉" : "💛"}</div>
-        <div style="font-size:18px">${state.player} scored <b>${state.score}</b> / <b>3</b></div>
+        <div class="mascot" style="margin:0 auto 10px">${perfect ? "🏆" : "⭐"}</div>
+        <div style="font-size:18px">${state.player} scored <b>${state.score}</b> out of <b>3</b></div>
         <div style="height:8px"></div>
         <div class="stars">${starsHTML(state.stars)}</div>
       </div>
-
+      ${toast}
       <div style="height:12px"></div>
-
       <div class="grid">
         <button id="again">Play Again</button>
         <button class="secondary" id="parent">Parent Dashboard</button>
@@ -607,178 +653,115 @@ function render(){
   }
 }
 
-/* Memory UI */
-function renderMemory(){
-  const m = mem;
-  const matches = m.matched.size/2;
-  const totalPairs = m.deck.length/2;
-
-  const cards = m.deck.map(c=>{
-    const isUp = m.flipped.includes(c.id) || m.matched.has(c.id);
-    const g = TILE_GRADS[rand(TILE_GRADS.length)];
-    const style = `background:linear-gradient(135deg, ${g[0]}, ${g[1]}); color:#fff;`;
-    return `<button class="choice" style="${style}" data-mem="${c.id}">${isUp ? c.v : "❓"}</button>`;
-  }).join("");
-
-  return `
-    <div class="panel">
-      <div class="sub">Memory</div>
-      <div class="prompt">Find the matching pairs!</div>
-      <div class="tiny">Matches: ${matches} / ${totalPairs}</div>
-    </div>
-    <div style="height:12px"></div>
-    <div class="grid grid4">${cards}</div>
-  `;
-}
-
-/* Binds */
+/* =======================
+   Binds
+   ======================= */
 function toggleVoice(){ state.voiceOn=!state.voiceOn; SFX.pop(); render(); }
 
+function bindCommonTopBar(){
+  const installBtn = document.getElementById("installBtn");
+  if(installBtn) installBtn.onclick = handleInstallClick;
+
+  const parentBtn = document.getElementById("parent");
+  if(parentBtn) parentBtn.onclick = openParent;
+
+  const voiceBtn = document.getElementById("voice");
+  if(voiceBtn) voiceBtn.onclick = toggleVoice;
+}
+
 function bindWelcome(){
-  document.getElementById("start").onclick=()=>{
-    SFX.pop(); speak("Welcome! Let's choose a player.");
-    state.screen="player"; render();
-  };
-  document.getElementById("parent").onclick=()=>openParent();
+  const start = document.getElementById("start");
+  if(start) start.onclick = ()=>{ SFX.pop(); speak("Welcome! Let's choose a player."); state.screen="player"; render(); };
+
+  const parent = document.getElementById("parent");
+  if(parent) parent.onclick = openParent;
+
+  const installMain = document.getElementById("installMain");
+  if(installMain) installMain.onclick = handleInstallClick;
 }
 
 function bindPlayer(){
-  document.getElementById("jayce").onclick=()=>{
-    SFX.pop(); state.player="Jayce";
-    speak("Hi Jayce! Choose a game.");
-    state.screen="mode"; render();
-  };
-  document.getElementById("jayde").onclick=()=>{
-    SFX.pop(); state.player="Jayde";
-    speak("Hi Jayde! Choose a game.");
-    state.screen="mode"; render();
-  };
+  bindCommonTopBar();
+  document.getElementById("jayce").onclick=()=>{ SFX.pop(); state.player="Jayce"; speak("Hi Jayce!"); state.screen="mode"; render(); };
+  document.getElementById("jayde").onclick=()=>{ SFX.pop(); state.player="Jayde"; speak("Hi Jayde!"); state.screen="mode"; render(); };
   document.getElementById("back").onclick=()=>{ state.screen="welcome"; render(); };
-  document.getElementById("parent").onclick=()=>openParent();
-  document.getElementById("voice").onclick=toggleVoice;
 }
 
 function bindMode(){
+  bindCommonTopBar();
   [...app.querySelectorAll("[data-mode]")].forEach(btn=>{
-    btn.onclick=()=>{
-      SFX.pop(); state.mode=btn.dataset.mode;
-      speak(state.mode + " mode.");
-      render();
-    };
+    btn.onclick=()=>{ SFX.pop(); state.mode=btn.dataset.mode; speak(state.mode+" mode."); render(); };
   });
-  document.getElementById("play").onclick=()=>{ SFX.pop(); startGame(); };
+  document.getElementById("play").onclick=()=>{ SFX.pop(); speak("Let's play!"); startGame(); };
   document.getElementById("change").onclick=()=>{ state.screen="player"; render(); };
-  document.getElementById("parent").onclick=()=>openParent();
-  document.getElementById("voice").onclick=toggleVoice;
 }
 
 function startGame(){
   state.round=1; state.score=0; state.stars=0; state.feedback=null; state.storyIndex=0; state.streak=0;
   currentQ=null; mem=null;
-  state.screen="game";
-  render();
-  setTimeout(()=> speak(`${state.player}, ${currentQ.prompt}`), 40);
+  state.screen="game"; render();
+  setTimeout(()=> speak(`${state.player}, ${currentQ.prompt}`), 30);
 }
 
 function bindGame(){
-  document.getElementById("parent").onclick=()=>openParent();
-  document.getElementById("voice").onclick=toggleVoice;
+  bindCommonTopBar();
 
-  if(state.mode==="Memory"){
-    bindMemory();
-    return;
-  }
+  if(state.mode==="Memory"){ bindMemory(); return; }
+
   [...app.querySelectorAll("[data-choice]")].forEach(btn=>{
     btn.onclick=()=>handleChoice(btn.dataset.choice);
   });
 }
 
 function handleChoice(raw){
-  if(!currentQ) return;
   const choice = (typeof currentQ.answer==="number") ? Number(raw) : raw;
-  const ok = (choice === currentQ.answer);
+  const ok = (choice===currentQ.answer);
 
-  state.feedback = ok ? {msg:"✅ Yes! Great job!"} : {msg:"⚡ Almost! Try the next one!"};
-  if(ok){ SFX.success(); speak("Great job!"); }
-  else { SFX.fail(); speak("Good try!"); }
-
+  state.feedback = ok ? {ok:true,msg:"Yes! Great job!"} : {ok:false,msg:"Almost! Next one!"};
+  ok ? (SFX.success(), speak("Great job!")) : (SFX.fail(), speak("Good try!"));
   render();
+
   setTimeout(()=>{ state.feedback=null; completeRound(ok); }, 520);
 }
 
 function completeRound(ok){
-  if(ok){ state.score++; state.stars = clamp(state.stars+1,0,3); }
+  if(ok){ state.score+=1; state.stars=clamp(state.stars+1,0,3); }
   adapt(ok);
 
-  if(state.round >= 3){ finishGame(); return; }
-  state.round++;
-  if(state.mode==="Story") state.storyIndex++;
+  if(state.round>=3){ finishGame(); return; }
+  state.round+=1;
+  if(state.mode==="Story") state.storyIndex+=1;
   currentQ=null; mem=null;
   render();
+  setTimeout(()=> speak(`${state.player}, ${currentQ.prompt}`), 30);
 }
 
 function finishGame(){
-  const perfect = (state.score===3);
-  state.progress.totalGames++;
+  const perfect = state.score===3;
+  state.progress.totalGames += 1;
   state.progress.totalStars += state.stars;
+  if(perfect) state.progress.modeWins[state.mode] = (state.progress.modeWins[state.mode]||0)+1;
   saveProgress();
 
-  if(perfect){ confetti(); SFX.success(); speak("Perfect!"); }
-  else { speak("Nice playing!"); }
+  if(perfect){ confetti(); SFX.success(); speak("Perfect game!"); }
+  else speak("Great playing!");
 
-  state.screen="winner";
-  render();
+  state.screen="winner"; render();
 }
 
 function bindWinner(){
+  bindCommonTopBar();
   document.getElementById("again").onclick=()=>{ SFX.pop(); state.screen="mode"; render(); };
-  document.getElementById("parent").onclick=()=>openParent();
-  document.getElementById("voice").onclick=toggleVoice;
 }
 
-/* Memory binds */
-function bindMemory(){
-  [...app.querySelectorAll("[data-mem]")].forEach(btn=>{
-    btn.onclick=()=>flipMemory(Number(btn.dataset.mem));
-  });
-}
-function flipMemory(id){
-  const m=mem;
-  if(m.lock) return;
-  if(m.matched.has(id)) return;
-  if(m.flipped.includes(id)) return;
-
-  SFX.pop();
-  m.flipped.push(id);
-  render();
-
-  if(m.flipped.length===2){
-    m.lock=true;
-    const [a,b]=m.flipped;
-    const ca=m.deck.find(x=>x.id===a);
-    const cb=m.deck.find(x=>x.id===b);
-
-    if(ca.v===cb.v){
-      SFX.success(); speak("Nice match!");
-      m.matched.add(a); m.matched.add(b);
-      setTimeout(()=>{
-        m.flipped=[]; m.lock=false;
-        if(m.matched.size===m.deck.length){
-          setTimeout(()=>completeRound(true), 250);
-        }else render();
-      }, 420);
-    }else{
-      SFX.fail(); speak("Try again.");
-      setTimeout(()=>{ m.flipped=[]; m.lock=false; render(); }, 620);
-    }
-  }
-}
-
-/* Parent modal */
+/* =======================
+   Parent Dashboard
+   ======================= */
 function openParent(){
   SFX.pop();
-  const p=state.progress;
-  const modal=document.createElement("div");
+  const p = state.progress;
+
+  const modal = document.createElement("div");
   modal.className="modal";
   modal.innerHTML=`
     <div class="card" style="width:min(900px,100%);">
@@ -789,21 +772,78 @@ function openParent(){
       <div style="height:12px"></div>
       <div class="grid grid2">
         <div class="panel"><div class="sub">Total Games</div><div style="font-weight:1000;font-size:24px">${p.totalGames}</div></div>
-        <div class="panel"><div class="sub">Stars Earned</div><div style="font-weight:1000;font-size:24px">${p.totalStars}</div></div>
         <div class="panel"><div class="sub">Best Streak</div><div style="font-weight:1000;font-size:24px">${p.bestStreak}</div></div>
-        <div class="panel"><div class="sub">Difficulty</div><div style="font-weight:1000;font-size:24px">Level ${state.difficulty}</div></div>
+        <div class="panel"><div class="sub">Stars</div><div style="font-weight:1000;font-size:24px">${p.totalStars}</div></div>
+        <div class="panel"><div class="sub">Difficulty</div><div style="font-weight:1000;font-size:24px">Level ${p.difficulty}</div></div>
       </div>
-      <div class="tiny" style="margin-top:10px">Saved on this device.</div>
-    </div>
-  `;
+      <div class="tiny" style="margin-top:10px">Saved on this device only.</div>
+    </div>`;
   document.body.appendChild(modal);
   modal.querySelector("#close").onclick=()=>modal.remove();
   modal.onclick=(e)=>{ if(e.target===modal) modal.remove(); };
 }
 
-/* Boot */
-window.addEventListener("click", ()=>{ ensureAudio(); }, {once:true});
+/* =======================
+   Memory Mode
+   ======================= */
+function renderMemory(){
+  const m=mem;
+  const matches=m.matched.size/2;
+  const totalPairs=m.deck.length/2;
+  const cards=m.deck.map(c=>{
+    const isUp=m.flipped.includes(c.id)||m.matched.has(c.id);
+    return `<button class="choice" style="height:74px;font-size:28px;background:${tileGradient(c.id)}" data-mem="${c.id}">${isUp?c.v:"❓"}</button>`;
+  }).join("");
+  return `
+    <div class="panel">
+      <div class="sub">Memory</div>
+      <div class="prompt">Find the matching pairs!</div>
+      <div class="tiny">Matches: ${matches} / ${totalPairs}</div>
+    </div>
+    <div style="height:12px"></div>
+    <div class="grid grid4">${cards}</div>`;
+}
+
+function bindMemory(){
+  [...app.querySelectorAll("[data-mem]")].forEach(btn=> btn.onclick=()=>flipMemory(Number(btn.dataset.mem)));
+}
+
+function flipMemory(id){
+  const m=mem;
+  if(m.lock||m.matched.has(id)||m.flipped.includes(id)) return;
+  SFX.pop();
+  m.flipped.push(id);
+  render();
+  if(m.flipped.length===2){
+    m.lock=true;
+    const [a,b]=m.flipped;
+    const ca=m.deck.find(x=>x.id===a);
+    const cb=m.deck.find(x=>x.id===b);
+    if(ca.v===cb.v){
+      SFX.success(); speak("Nice match!");
+      m.matched.add(a); m.matched.add(b);
+      setTimeout(()=>{
+        m.flipped=[]; m.lock=false;
+        if(m.matched.size===m.deck.length){
+          state.feedback={ok:true,msg:"Pairs completed!"};
+          render();
+          setTimeout(()=>{ state.feedback=null; completeRound(true); }, 380);
+        }else render();
+      }, 420);
+    }else{
+      SFX.fail(); speak("Try again!");
+      setTimeout(()=>{ m.flipped=[]; m.lock=false; render(); }, 620);
+    }
+  }
+}
+
+/* =======================
+   Boot
+   ======================= */
+window.addEventListener("click", ()=>ensureAudio(), {once:true});
+
 if("serviceWorker" in navigator){
   navigator.serviceWorker.register("sw.js").catch(()=>{});
 }
+
 render();
